@@ -18,6 +18,8 @@ lst_t build_lst(elt_t *elts, size_t count);
 
 #ifdef LST_IMPL
 
+#include <stdlib.h>
+
 void print_lst(lst_t l) {
   bool first = true;
   printf("[");
