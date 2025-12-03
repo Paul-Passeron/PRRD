@@ -1,1 +1,4 @@
 ./proj
+rapport/*
+!rapport/*.pdf
+!rapport/*.tex
