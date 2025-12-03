@@ -7,8 +7,10 @@ typedef struct list_shape_t {
   size_t count;
 } list_shape;
 
+
 void back_again(lst_t bp, lst_t sp, lst_t np);
-void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp);
+void tortoise_hare(list_shape ls, int k, lst_t bp, lst_t sp, lst_t fp,
+                   lst_t qp);
 void value_reverse(lst_t sp, lst_t qp);
 
 #ifdef LIST_SHAPE_IMPL
@@ -16,7 +18,9 @@ void value_reverse(lst_t sp, lst_t qp);
 void value_reverse(lst_t sp, lst_t qp) { tortoise_hare(NULL, sp, sp, qp); }
 
 // TODO: Add requirements
-void back_again(lst_t bp, lst_t sp, lst_t np) {
+void back_again(list_shape ls,
+
+                int k, lst_t bp, lst_t sp, lst_t np) {
   if (bp == NULL || np == NULL)
     return;
 
@@ -31,17 +35,18 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 }
 
 // TODO: add requirements
-void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
+void tortoise_hare(list_shape ls, int k, lst_t bp, lst_t sp, lst_t fp,
+                   lst_t qp) {
   lst_t nfp;
   if (fp == qp) {
-    back_again(bp, sp, sp);
+    back_again(ls, k, bp, sp, sp);
   } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
-    back_again(bp, sp, sp->cdr);
+    back_again(ls, k, bp, sp, sp->cdr);
   } else {
     nfp = fp->cdr->cdr;
     lst_t nsp = sp->cdr;
     sp->cdr = bp;
-    tortoise_hare(sp, nsp, nfp, qp);
+    tortoise_hare(ls, k + 1, sp, nsp, nfp, qp);
   }
 }
 
