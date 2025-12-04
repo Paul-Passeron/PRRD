@@ -2,3 +2,4 @@
 rapport/*
 !rapport/*.pdf
 !rapport/*.tex
+!rapport/Makefile
