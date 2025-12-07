@@ -1,1 +1,57 @@
 \section{Titre 4}
+
+
+
+\subsection*{Algorithme de Morris}
+
+
+Cette section présente la vérification de l'algorithme de Morris : le parcours en ordre d'un arbre binaire. En OCaml, la structure d'arbre binaire mutable est définie comme suit :
+
+\begin{lstlisting}
+type tree = E 
+          | N of { mutable left: tree; 
+                   mutable dat: elt; 
+                   mutable right: tree }
+\end{lstlisting}
+
+L'algorithme permet d'éviter l'allocation mémoire en ajoutant temporairement des arêtes arrière qui créent des cycles depuis le nœud le plus à droite de chaque sous-arbre gauche vers le nœud parent.
+Le code OCaml donné définit une fonction \texttt{morris} qui
+traverse l'arbre selon ce principe, et utilise une fonction auxiliaire
+\texttt{warp}. Celle-ci descend vers le nœud le plus à droite du sous-arbre
+gauche. Si ce nœud possède un pointeur droit vide, \texttt{warp} crée un lien
+temporaire vers le parent et renvoie \texttt{true}. Si ce nœud pointe déjà vers le parent, le lien temporaire est supprimé et \texttt{warp} renvoie
+\texttt{false}. La fonction \texttt{morris} utilise cette information pour
+décider s’il faut parcourir le sous-arbre gauche ou visiter le nœud courant.
+
+
+\subsection*{Projection sur une séquence plate}
+
+Pour vérifier l'algorithme de Morris, nous projetons la structure d'un arbre sur une séquence fantôme plate, dans l'ordre du parcours en ordre. En effet, les outils SMT ne gèrent pas bien la récursion sur les arbres. Pour chaque nœud, nous stockons les positions de ses enfants et descendants extrêmes :
+
+\begin{lstlisting}
+type tree_shape = {
+  cell : int -> tree;  (* noeuds *)
+  lchd : int -> int;   (* enfant gauche *)
+  rchd : int -> int;   (* enfant droit *)
+  lmdt : int -> int;   (* descendant + a gauche *)
+  rmdt : int -> int;   (* descendant + a droite *)
+  size : int }
+\end{lstlisting}
+
+Seuls les nœuds non-vides sont stockés. Par exemple, pour un nœud \texttt{i} avec sous-arbre gauche vide, on met \texttt{i} dans \texttt{lchd} et \texttt{lmdt} (idem à droite avec \texttt{rchd} et \texttt{rmdt}).
+
+\subsection*{Invariants et prédicats}
+
+Le type \texttt{tree\_shape} possède des invariants : cellules non-vides, cellules deux-à-deux distinctes, listées selon le parcours en ordre, sans cellules superflues. Les prédicats \texttt{wf\_lhs} et \texttt{wf\_rhs} relient la forme d'arbre au contenu de la mémoire, pour les côtés gauche et droit séparément. Ils sont définis sans récursion, uniquement avec des quantificateurs universels et de l'arithmétique linéaire.
+
+\subsection*{États intermédiaires}
+
+Le prédicat \texttt{warped\_rhs} étend \texttt{wf\_rhs} pour confirmer aussi que les états intermédiaires en mémoire définissent exactement l'arbre. En effet dans les état intermediaires certains sous-arbres gauches sont déformés et bouclent vers leurs parents. Un nœud \texttt{i} avec enfant droit vide peut avoir son champ droit pointant vers \texttt{cell[i+1]}. Seuls les sous-arbres contenant l'indice \texttt{lo} (fixé au nœud courant) sont déformés.
+
+\subsection*{Vérification}
+
+Pour vérifier l'algorithme on utilise une liste globale \texttt{trace} qui enregistre les nœuds visités. On doit prouver donc deux choses : (1) la trace finale contient tous les nœuds dans le bon ordre, et (2) l'arbre final est revenu à son état initial. 
+
+Un lemme mathématique est nécessaire : deux sous-arbres quelconques sont soit imbriqués (l'un dans l'autre), soit complètement séparés avec au moins un nœud entre eux. 
+
+Enfin, une fonction fantôme (utilisée uniquement pour la preuve) transforme une définition récursive classique d'arbre binaire en notre représentation plate \texttt{tree\_shape}, permettant de partir d'une spécification naturelle vers une forme vérifiable automatiquement.
