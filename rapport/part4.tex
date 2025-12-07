@@ -36,7 +36,7 @@ type tree_shape = {
   size : int }
 \end{lstlisting}
 
-Seuls les nœuds non-vides sont stockés. Par exemple, pour un nœud \texttt{i} avec sous-arbre gauche vide, on met \texttt{i} dans \texttt{lchd} et \texttt{lmdt} (idem à droite avec \texttt{rchd} et \texttt{rmdt}).
+Seuls les noeuds non-vides sont stockés. Par exemple, pour un nœud \texttt{i} avec sous-arbre gauche vide, on met \texttt{i} dans \texttt{lchd} et \texttt{lmdt} (idem à droite avec \texttt{rchd} et \texttt{rmdt}).
 
 \subsection*{Invariants et prédicats}
 
@@ -48,7 +48,7 @@ Le prédicat \texttt{warped\_rhs} étend \texttt{wf\_rhs} pour confirmer aussi q
 
 \subsection*{Vérification}
 
-Pour vérifier l'algorithme on utilise une liste globale \texttt{trace} qui enregistre les nœuds visités. On doit prouver donc deux choses : (1) la trace finale contient tous les nœuds dans le bon ordre, et (2) l'arbre final est revenu à son état initial.
+Pour vérifier l'algorithme on utilise une liste globale \texttt{trace} qui enregistre les noeuds visités. On doit prouver donc deux choses : (1) la trace finale contient tous les noeuds dans le bon ordre, et (2) l'arbre final est revenu à son état initial.
 
 Un lemme mathématique est nécessaire : deux sous-arbres quelconques sont soit imbriqués (l'un dans l'autre), soit complètement séparés avec au moins un nœud entre eux.
 
