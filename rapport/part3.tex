@@ -1,3 +1,4 @@
+
 \section{Reversing values in constant space}
 Jusqu'ici, on a pu inverser une liste chaînée en inversant les "maillons" de cette chaîne (les pointeurs, le champ \verb|cdr|). Les valeurs de chaque noeuds (le champ \verb|car|) n'ont pas bougées mais les pointeurs reliants les noeuds entre eux ont été inversés.
 L'article propose une solution différente pour résoudre le même problème. Sans toucher à la structure même de la liste (les pointeurs), on essaie maintenant d'inverser les valeurs, et ce sans allouer plus de mémoire (\textit{constant space}).
@@ -31,7 +32,27 @@ let rec back_again bp sp np = match bp, np with
 \caption{La fonction \texttt{back\_again}}
 \end{figure}
 
-\textbf{TODO: expliquer}
+\verb|back_again| parcourt deux portions de liste en parallèle et échange leur valeurs.
+
+Les paramètres sont:
+
+\begin{itemize}
+    \item \verb|bp |(\textit{back pointer}): Pointe vers la portion de la liste déjà traitée (inversée) qui remonte vers le début initial de la liste.
+    \item \verb|sp |(\textit{slow pointer}): Le noeud après \verb|bp| dans la liste originale et donc le noeud précédent dans la reconstruction de la chaîne inversée
+    \item \verb|np |(\textit{next pointer}): Pointe vers la portion de la liste que l'on n'a pas traitée (donc vers la fin de la liste).
+\end{itemize}
+
+\subsubsection{Explication}
+\begin{itemize}
+    \item si \verb|bp| ou \verb|np| est vide, alors on ne fait rien. En effet, la fonction n'est pas faite pour traiter le cas où \verb|bp| est vide car on est censé l'appeler depuis \verb|tortoise_hare| uniquement; qui l'empêche d'être vide par par construction. De plus, lorsque \verb|np| est vide, on a fini.
+    \item \verb|bp| et \verb|np| sont tous les deux des \verb|Cons|.
+    \begin{enumerate}
+        \item On échange les valeurs de \verb|bp| et \verb|np|.
+        \item On inverse le sens du pointeur. On sauvegarde le prochain noeud de \verb|bp| dans \verb|nbp| et on fait pointer \verb|bp.cdr| vers \verb|sp| (On inverse les pointeurs mais ils ils sont en fait déjà inversés à cause de \verb|tortoise_hare|. Ils retrouvent donc leur sens original)
+        \item On récurse avec \verb|nbp| comme nouveau \textit{back pointer} (avance dans la première partie), \verb|bp| comme nouveau \textit{slow pointer} (devient le précédent) et \verb|nc.cdr| comme nouveau \textit{next pointer} (avance dans la deuxième partie).
+    \end{enumerate}
+\end{itemize}
+
 
 \subsection{La fonction \texttt{tortoise\_hare}}
 \begin{figure}[H]
@@ -81,5 +102,5 @@ Cette fonction sert à inverser la liste en espace constant. Elle est assez simp
 Pour se convaincre que l'algorithme s'effectue bien en espace constant, on peut noter plusieurs choses:
 \begin{itemize}
 \item Comme décrit dans l'article, tous les appels effectués dans les trois fonctions sont des \textit{tail calls} ou appels terminaux / de queue. Cela signifie qu'au lieu de réellement "appeller" les fonctions et de garder sur la pile les informations de l'appel courant, on peut simplement \textit{jump} à la fonction appelée, ce qui signifie que l'espace utilisé sur la pile n'est que le maximum utilisé par l'appel d'une des trois fonctions. Ici, chaque fonction n'utilise qu'un nombre fixe de variables locales: \verb|tmp|, \verb|nbp|, \verb|nfp| et \verb|nsp|. Puisque les valeurs sont des entiers et des pointeurs et qu'elles tiennent sûrement dans des registres, il est bien possible que l'empreinte sur la pile soit nulle (ou au pire constante).
-\item Aucune allocation dynamique (création d'objet) n'est faite. On modifie simplement les valeurs en place, ce qui assure ici aussi que l'algoithme s'effectue en espace constant.
+\item Aucune allocation dynamique (création d'objet) n'est faite. Aucune cellule \verb|Cons| n'est allouée durant l'éxécution. On modifie simplement les valeurs en place, ce qui assure ici aussi que l'algoithme s'effectue en espace constant.
 \end{itemize}
