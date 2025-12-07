@@ -1,5 +1,32 @@
 \documentclass[a4, 12pt]{extarticle}
 \usepackage[french]{babel}
+\usepackage{listings}
+\usepackage{color}
+\lstset{language=Caml}
+\definecolor{codered}{rgb}{0.8,0,0}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+
+\lstdefinestyle{caml_style}{
+commentstyle=\color{codegreen},
+keywordstyle=\color{codered},
+stringstyle=\color{codepurple},
+basicstyle=\ttfamily,
+breakatwhitespace=false,
+breaklines=true,
+numberstyle=\tiny\color{codered},
+captionpos=b,
+keepspaces=true,
+showspaces=false,
+showstringspaces=false,
+showtabs=false,
+tabsize=4,
+numbers=left,
+numbersep=10pt
+}
+\lstset{style = caml_style}
+
+
 \title{%
     Rapport d'article\\
     \bigskip \large \textit{When Separation Arithmetic is Enough}}
