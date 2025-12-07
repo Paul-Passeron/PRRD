@@ -2,9 +2,17 @@
 
 Dans cette partie, les auteurs proposent d'introduire leur méthode en présentant une structure de listes chaînées en Ocaml et une fonction revisitée de la manière "classique" de les inverser.\\
 
+Les listes chaînées mutables sont définies de la façon suivante:
+
+\begin{lstlisting}
+type ls t=
+    | Nil
+    | Cons of { mutable car: ekt; mutable cdr: lst }
+\end{lstlisting}
+
 \subsection{Listes chaînées et renversement classique revisité}
 
-L'implémentation choisie repose sur une fonction auxiliaire et récursive prenant deux pointeurs, l'un vers la partie déjà inversée et l'autre vers le segment pas encore traité. À chaque itération de la boucle récursive, le premier élément du segment non traité est détaché et réinséré en tant que tête du segment inversé et ce, jusqu'à ce que la liste initiale soit vide.\\  
+L'implémentation choisie repose sur une fonction auxiliaire et récursive prenant deux pointeurs, l'un vers la partie déjà inversée et l'autre vers le segment pas encore traité. À chaque itération de la boucle récursive, le premier élément du segment non traité est détaché et réinséré en tant que tête du segment inversé et ce, jusqu'à ce que la liste initiale soit vide.\\
 
 Néanmoins, les auteurs ont précisé dans la partie précédente que les solveurs SMT sont inefficaces quand il y a besoin d'instancier de la récursion. Ainsi, il est proposé dans l'article une nouvelle idée : représenter la structure initiale de la liste sous la forme d’une séquence \textit{ghost} d’indices entiers.\\
 
@@ -12,7 +20,7 @@ Néanmoins, les auteurs ont précisé dans la partie précédente que les solveu
 
 La construction introduite dans cette partie consiste en un objet abstrait appelé \textit{list\_shape}. Celui-ci associe à la liste étudiée une représentation qui ne change pas l'état mémoire réel mais fournit seulement une représentation sous forme de tableau "classique" de cette liste. En effet, cet objet associe les $n$ valeurs contenues dans la liste chaînée à des entiers de $0$ à $n$ par ordre d'apparition depuis la tête. Ainsi, cette représentation établit une correspondance bijective entre indices entiers et cellules réelles.\\
 
-Grâce à ce nouveau modèle, les propriétés structurelles habituellement exprimées par induction peuvent être reformulées en contraintes arithmétiques. Par exemple, la propriété "chaque cellule pointe vers la suivante" peut se traduire par l'invariant "$\forall i \in [0,n-2]$, le pointeur \textit{cdr} de la cellule d'indice $i$ correspond à la cellule $i+1$". Ainsi, on obtient une version de la liste non définie récursivement mais par rapport à une plage d'indices.\\ 
+Grâce à ce nouveau modèle, les propriétés structurelles habituellement exprimées par induction peuvent être reformulées en contraintes arithmétiques. Par exemple, la propriété "chaque cellule pointe vers la suivante" peut se traduire par l'invariant "$\forall i \in [0,n-2]$, le pointeur \textit{cdr} de la cellule d'indice $i$ correspond à la cellule $i+1$". Ainsi, on obtient une version de la liste non définie récursivement mais par rapport à une plage d'indices.\\
 
 \subsection{Spécification et automatisation de la preuve}
 
@@ -21,4 +29,3 @@ Une fois cette structure définie, l’algorithme de renversement peut être sp�
 Les solveurs SMT peuvent alors utiliser et vérifier ces invariants, car ramenés à de l'arithmétique de base et de la logique du premier ordre, domaines dans lesquels ils sont performants.\\
 
 Finalement, cette première étape prouve l'intérêt de traduire la récursivité par un modèle plat indexé pour l'automatisation de la preuve.\\
-

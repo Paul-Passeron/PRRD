@@ -1,6 +1,4 @@
-\section{Titre 4}
-
-
+\section{Binary Tree Traversal Using Morris’s Algorithm}
 
 \subsection*{Algorithme de Morris}
 
@@ -8,9 +6,9 @@
 Cette section présente la vérification de l'algorithme de Morris : le parcours en ordre d'un arbre binaire. En OCaml, la structure d'arbre binaire mutable est définie comme suit :
 
 \begin{lstlisting}
-type tree = E 
-          | N of { mutable left: tree; 
-                   mutable dat: elt; 
+type tree = E
+          | N of { mutable left: tree;
+                   mutable dat: elt;
                    mutable right: tree }
 \end{lstlisting}
 
@@ -50,8 +48,8 @@ Le prédicat \texttt{warped\_rhs} étend \texttt{wf\_rhs} pour confirmer aussi q
 
 \subsection*{Vérification}
 
-Pour vérifier l'algorithme on utilise une liste globale \texttt{trace} qui enregistre les nœuds visités. On doit prouver donc deux choses : (1) la trace finale contient tous les nœuds dans le bon ordre, et (2) l'arbre final est revenu à son état initial. 
+Pour vérifier l'algorithme on utilise une liste globale \texttt{trace} qui enregistre les nœuds visités. On doit prouver donc deux choses : (1) la trace finale contient tous les nœuds dans le bon ordre, et (2) l'arbre final est revenu à son état initial.
 
-Un lemme mathématique est nécessaire : deux sous-arbres quelconques sont soit imbriqués (l'un dans l'autre), soit complètement séparés avec au moins un nœud entre eux. 
+Un lemme mathématique est nécessaire : deux sous-arbres quelconques sont soit imbriqués (l'un dans l'autre), soit complètement séparés avec au moins un nœud entre eux.
 
 Enfin, une fonction fantôme (utilisée uniquement pour la preuve) transforme une définition récursive classique d'arbre binaire en notre représentation plate \texttt{tree\_shape}, permettant de partir d'une spécification naturelle vers une forme vérifiable automatiquement.
