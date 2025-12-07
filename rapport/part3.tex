@@ -1,1 +1,70 @@
-\section{Titre 3}
+\section{Reversing values in constant space}
+Jusqu'ici, on a pu inverser une liste chaînée en inversant les "maillons" de cette chaîne (les pointeurs, le champ \verb|cdr|). Les valeurs de chaque noeuds (le champ \verb|car|) n'ont pas bougées mais les pointeurs reliants les noeuds entre eux ont été inversés.
+L'article propose une solution différente pour résoudre le même problème. Sans toucher à la structure même de la liste (les pointeurs), on essaie maintenant d'inverser les valeurs, et ce sans allouer plus de mémoire (\textit{constant space}).
+
+
+L'algorithme illustré dans le papier utilise trois fonctions:
+
+\begin{itemize}
+    \item \verb|back_again (bp: lst) (sp: lst) (np: lst): unit| \\ \smallskip
+    \item \verb|tortoise_hare (bp: lst) (sp: lst)|
+        \\ \verb|              (fp: lst) (qp: lst): unit| \\ \smallskip
+    \item \verb|value_reverse (sp: lst) (qp: lst): unit|
+\end{itemize}
+
+Les fonctions suivantes ne sont pas exactement comme écrites dans le papier mais ont exactement la même valeur sémantique et sont du \verb|OCaml| valide.
+
+\subsection{La fonction \texttt{back\_again}}
+\begin{figure}
+\centering
+\begin{lstlisting}
+let rec back_again bp sp np = match bp, np with
+    | Cons bc, Cons nc ->
+        let tmp = bc.car in
+        bc.car <- nc.car;
+        nc.car <- tmp;
+        let nbp = bc.cdr in bc.cdr <- sp;
+        back_again nbp bp nc.cdr
+    | _ -> ()
+\end{lstlisting}
+
+\caption{La fonction \texttt{back\_again}}
+\end{figure}
+
+\textbf{TODO: expliquer}
+
+\subsection{La fonction \texttt{tortoise\_hare}}
+\begin{figure}
+\centering
+\begin{lstlisting}
+let rec tortoise_hare bp sp fp qp =
+match sp, fp with
+    | _ when fp == qp ->
+        back_again bp sp sp
+    | Cons sc, Cons {cdr = nfp} when nfp == qp ->
+        back_again bp sp sc.cdr
+    | Cons sc, Cons {cdr = Cons {cdr = nfp}} ->
+        let nsp = sc.cdr in sc.cdr <- bp;
+        tortoise_hare sp nsp nfp qp
+    | _ -> () (* Unreachable by assumptions *)
+\end{lstlisting}
+
+\caption{La fonction \texttt{tortoise\_hare}}
+\end{figure}
+
+\textbf{TODO: expliquer}
+
+\subsection{La fonction \texttt{value\_reverse}}
+\begin{figure}
+\centering
+\begin{lstlisting}
+let value_reverse sp qp =
+    tortoise_hare Nil sp sp qp
+\end{lstlisting}
+
+\caption{La fonction \texttt{value\_reverse}}
+\end{figure}
+
+\textbf{TODO: expliquer}
+
+% L'algorithme illustré utilise deux pointeurs (en omettant le pointeur terminateur de liste, qui ne sert qu'à délimiter la liste sur laquelle on effectue l'algorithme). Ces deux pointeurs sont nommés \verb|sp| et \verb|fb| pour \textit{fast pointer} et \textit{slow pointer} respectivement.
