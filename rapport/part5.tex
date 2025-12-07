@@ -1,1 +1,9 @@
-\section{Titre 5}
+\section{Conclusion}
+
+L'approche de "séparation arithmétique" présentée dans cet article permet de transformer le problème de vérification des structures récursives en un problème d'arithmétique linéaire. Les auteurs ont réussis à largement automatiser le processus de preuve avec des solveurs SMT grâce à cette méthode.
+
+Les trois exemples étudiés démontrent la polyvalence de la méthode. L'inversion classique sert à introduire la notion de \verb|list_shape| et les différents prédicats non-récursifs. L'algorithme d'inversion des valeurs en espace constant illustre la modification temporaire des structures (la structure de la liste est au final inchangée). Enfin, l'algorithme de Morris montre que cette méthode est extensible à d'autres structures plus complexes, comme ici les arbres binaires avec la notion de \verb|tree_shape|, prouvant que la technique n'est pas limitée aux structures linéaires.
+
+Cette méthode a cependant des limites. En effet, son application à des structures plus complexes comme les graphes orientés acycliques ou les graphes généraux reste un défi ouvert. De plus, la nécéssité de définir manuellement les structures fantômes appropriées pour chaque type de données peut être un frein à l'adoption de cette méthode.
+
+Finalement, l'article démontre quand même que pour une grande classe de programmes (au moins les opérations sur les listes chaînées et les arbres binaires), la séparation arithmétique offre un bon compromis entre expréssivité (cf. Introduction) et automatisation par solveurs SMT.
