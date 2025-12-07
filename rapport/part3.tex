@@ -135,7 +135,7 @@ Les paramètres sont:
 Pour se convaincre que l'algorithme s'effectue bien en espace constant, on peut noter plusieurs choses:
 \begin{itemize}
 \item Comme décrit dans l'article, tous les appels effectués dans les trois fonctions sont des \textit{tail calls} ou appels terminaux / de queue. Cela signifie qu'au lieu de réellement "appeller" les fonctions et de garder sur la pile les informations de l'appel courant, on peut simplement \textit{jump} à la fonction appelée, ce qui signifie que l'espace utilisé sur la pile n'est que le maximum utilisé par l'appel d'une des trois fonctions. Ici, chaque fonction n'utilise qu'un nombre fixe de variables locales: \verb|tmp|, \verb|nbp|, \verb|nfp| et \verb|nsp|. Puisque les valeurs sont des entiers et des pointeurs et qu'elles tiennent sûrement dans des registres, il est bien possible que l'empreinte sur la pile soit nulle (ou au pire constante).
-\item Aucune allocation dynamique (création d'objet) n'est faite. Aucune cellule \verb|Cons| n'est allouée durant l'éxécution. On modifie simplement les valeurs en place, ce qui assure ici aussi que l'algoithme s'effectue en espace constant.
+\item Aucune allocation dynamique (création d'objet) n'est faite. Aucune cellule \verb|Cons| n'est allouée durant l'éxécution. On modifie simplement les valeurs en place, ce qui assure ici aussi que l'algorithme s'effectue en espace constant.
 \end{itemize}
 
 \subsection{Véfication}
