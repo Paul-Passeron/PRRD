@@ -73,7 +73,32 @@ match sp, fp with
 \caption{La fonction \texttt{tortoise\_hare}}
 \end{figure}
 
-\textbf{TODO: expliquer}
+\verb|tortoise_hare| Utilise l'algorithme du lièvre et de la tortue pour trouver le milieu de la liste, inverser les pointeurs de la première moitié pendant le parcours et ensuite appeler \verb|back_again| pour échanger les valeurs.
+
+
+Les paramètres sont:
+
+\begin{itemize}
+    \item \verb|bp |(\textit{back pointer}): Pointe vers la portion de la liste déjà traitée (inversée) qui remonte vers le début initial de la liste.
+    \item \verb|sp |(\textit{slow pointer}): La "tortue" qui avance d'un noeud à la fois
+    \item \verb|fp |(\textit{fast pointer}): Le "lièvre" qui avance de deux noeuds à la fois (losrque celui-ci est Nil, alors \verb|sp| est le milieu de la liste).
+    \item \verb|qp |(\textit{queue pointer}): La fin de la liste (reste fixe et sert à arrêter l'algorithme si on ne veut inverser qu'une portion d'une liste plus grande).
+\end{itemize}
+
+\subsubsection{Explication}
+
+La fonction à trois cas principaux
+
+\paragraph{Cas 1: \texttt{fp == qp}} Le lièvre a atteint la fin de la liste. Cela signifie d'ailleurs que la liste est de longueur paire. La tortue est donc exactement au milieu. On appelle alors \verb|back_again bp sp sp| pour inverser les valeurs. On note que \verb|sp| est passé deux fois en argument car on veut inverser la première moitié (\verb|bp|) avec la seconde moitié \verb|sp|, qui commence originellement juste après le premier noeud de \verb|bp| et qui est le premier \verb|np|.
+
+\paragraph{Cas 2: \texttt{nfp == qp}} Le lièvre a atteint l'avant dernier maillon de la liste. Cela signifie que la liste est de longueur impaire. On appelle ainsi \\ \verb|back_again bp sp sc.cdr|. Les deux premiers éléments sont les mêmes que dans le cas 1 et pour la même raison. Le dernier argument est \verb|sc.cdr| car on saute le noeud \verb|sc| étant le vrai milieu (la liste est de longueur impaire) et donc le seul noeud dont la valeur ne change pas.
+
+\paragraph{Cas 3: Progression normale} On fait ce que l'on a décrit plus haut dans le rôle de la fonction. On sauvegarde la prochaine valeur de la tortue que l'on nomme \verb|nsp|. Ensuite, on inverse le pointeur \verb|sc.cdr <- bp| (On construit la moitié de chaîne inversée). Finalement, on fait une récursion où:
+\begin{itemize}
+    \item \verb|sp| est le nouveau \verb|bp| (ajoute à la chaîne inversée).
+    \item \verb|nsp| est le nouveau \verb|sp| (on a avancé la tortue de un noeud).
+    \item \verb|nfp| est le nouveau \verb|fp| (on a avancé le lièvre de deux noeuds).
+\end{itemize}
 
 \subsection{La fonction \texttt{value\_reverse}}
 \begin{figure}[H]
@@ -87,6 +112,14 @@ let value_reverse sp qp =
 \end{figure}
 
 Cette fonction sert à inverser la liste en espace constant. Elle est assez simple puisqu'elle ne fait qu'appeler \verb|tortoise_hare| avec les bons arguments.
+
+Les paramètres sont:
+
+\begin{itemize}
+    \item \verb|sp |(\textit{slow pointer}): Le premier maillon de la liste à inverser.
+    \item \verb|qp |(\textit{queue pointer}): La fin de la liste (reste fixe et sert à arrêter l'algorithme si on ne veut inverser qu'une portion d'une liste plus grande).
+\end{itemize}
+
 \begin{itemize}
     \item \verb|tortoise_hare :: bp| $\Rightarrow$ \verb|Nil|\\
         \verb|bp| pour \textit{back pointer} représente la portion de la liste que l'on a déjà inversé. Ici, comme on commence le processus, sa valeur initiale est la liste vide, soit \verb|Nil|
@@ -103,4 +136,14 @@ Pour se convaincre que l'algorithme s'effectue bien en espace constant, on peut 
 \begin{itemize}
 \item Comme décrit dans l'article, tous les appels effectués dans les trois fonctions sont des \textit{tail calls} ou appels terminaux / de queue. Cela signifie qu'au lieu de réellement "appeller" les fonctions et de garder sur la pile les informations de l'appel courant, on peut simplement \textit{jump} à la fonction appelée, ce qui signifie que l'espace utilisé sur la pile n'est que le maximum utilisé par l'appel d'une des trois fonctions. Ici, chaque fonction n'utilise qu'un nombre fixe de variables locales: \verb|tmp|, \verb|nbp|, \verb|nfp| et \verb|nsp|. Puisque les valeurs sont des entiers et des pointeurs et qu'elles tiennent sûrement dans des registres, il est bien possible que l'empreinte sur la pile soit nulle (ou au pire constante).
 \item Aucune allocation dynamique (création d'objet) n'est faite. Aucune cellule \verb|Cons| n'est allouée durant l'éxécution. On modifie simplement les valeurs en place, ce qui assure ici aussi que l'algoithme s'effectue en espace constant.
+\end{itemize}
+
+\subsection{Véfication}
+Cet algorithme étant tout aussi récursif que celui explicité dans l'échauffement, pose ainsi les mêmes problèmes de vérifications, notamment pour les prouveurs SMT. On réutilise alors le type \verb|list_shape| ainsi que les prédicats utilisés précédemment. On peut le constater assez facilement si l'on va voir les définitions \textit{Why3} des trois fonctions. Le principe est toujours d'utiliser des paramètres fantômes (\textit{ghost parameters}) pour faciliter la vérification grâce aux prouveurs SMT. Dans les fonctions \verb|tortoise_hare| et \verb|back_again| on utilise en plus des paramètres fantômes entiers pour relier les différents pointeurs à leur place dans la \verb|list_shape|.
+
+\paragraph{}
+Finalement, ce nouvel algorithme permet d'inverser une liste chaînée, tout comme le fait la première méthode, mais avec deux garanties supplémentaires:
+\begin{itemize}
+\item La liste inversée garde la même structure. La chaîne des pointeurs reste la même (grâce à la double inversion dans \verb|tortoise_hare| et dans \verb|back_again|).
+\item La lliste est inversée en espace constant, aucune allocation mémoire n'est faite, que ce soit sur le tas (\textit{heap}) ou sur la pile (\textit{stack}).
 \end{itemize}
