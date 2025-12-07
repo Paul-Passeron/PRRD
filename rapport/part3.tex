@@ -15,7 +15,7 @@ L'algorithme illustré dans le papier utilise trois fonctions:
 Les fonctions suivantes ne sont pas exactement comme écrites dans le papier mais ont exactement la même valeur sémantique et sont du \verb|OCaml| valide.
 
 \subsection{La fonction \texttt{back\_again}}
-\begin{figure}
+\begin{figure}[H]
 \centering
 \begin{lstlisting}
 let rec back_again bp sp np = match bp, np with
@@ -34,7 +34,7 @@ let rec back_again bp sp np = match bp, np with
 \textbf{TODO: expliquer}
 
 \subsection{La fonction \texttt{tortoise\_hare}}
-\begin{figure}
+\begin{figure}[H]
 \centering
 \begin{lstlisting}
 let rec tortoise_hare bp sp fp qp =
@@ -55,7 +55,7 @@ match sp, fp with
 \textbf{TODO: expliquer}
 
 \subsection{La fonction \texttt{value\_reverse}}
-\begin{figure}
+\begin{figure}[H]
 \centering
 \begin{lstlisting}
 let value_reverse sp qp =
@@ -65,6 +65,21 @@ let value_reverse sp qp =
 \caption{La fonction \texttt{value\_reverse}}
 \end{figure}
 
-\textbf{TODO: expliquer}
+Cette fonction sert à inverser la liste en espace constant. Elle est assez simple puisqu'elle ne fait qu'appeler \verb|tortoise_hare| avec les bons arguments.
+\begin{itemize}
+    \item \verb|tortoise_hare :: bp| $\Rightarrow$ \verb|Nil|\\
+        \verb|bp| pour \textit{back pointer} représente la portion de la liste que l'on a déjà inversé. Ici, comme on commence le processus, sa valeur initiale est la liste vide, soit \verb|Nil|
+    \item \verb|tortoise_hare :: sp, fp| $\Rightarrow$ \verb|sp|\\
+        \verb|sp| et \verb|fp| représentent les deux pointeurs que l'on utilise pour parcourir la liste. Comme on commence le processus, leur valeur initiale est la tête de la liste à inverser, soit \verb|sp|.
+    \item \verb|tortoise_hare :: qp| $\Rightarrow$ \verb|qp|\\
+        \verb|qp| représente la queue de la liste à inverser. Comme on commence le processus, sa valeur initiale est la queue de la liste à inverser, soit \verb|qp|.
+\end{itemize}
 
-% L'algorithme illustré utilise deux pointeurs (en omettant le pointeur terminateur de liste, qui ne sert qu'à délimiter la liste sur laquelle on effectue l'algorithme). Ces deux pointeurs sont nommés \verb|sp| et \verb|fb| pour \textit{fast pointer} et \textit{slow pointer} respectivement.
+
+\subsection{Espace constant ?}
+
+Pour se convaincre que l'algorithme s'effectue bien en espace constant, on peut noter plusieurs choses:
+\begin{itemize}
+\item Comme décrit dans l'article, tous les appels effectués dans les trois fonctions sont des \textit{tail calls} ou appels terminaux / de queue. Cela signifie qu'au lieu de réellement "appeller" les fonctions et de garder sur la pile les informations de l'appel courant, on peut simplement \textit{jump} à la fonction appelée, ce qui signifie que l'espace utilisé sur la pile n'est que le maximum utilisé par l'appel d'une des trois fonctions. Ici, chaque fonction n'utilise qu'un nombre fixe de variables locales: \verb|tmp|, \verb|nbp|, \verb|nfp| et \verb|nsp|. Puisque les valeurs sont des entiers et des pointeurs et qu'elles tiennent sûrement dans des registres, il est bien possible que l'empreinte sur la pile soit nulle (ou au pire constante).
+\item Aucune allocation dynamique (création d'objet) n'est faite. On modifie simplement les valeurs en place, ce qui assure ici aussi que l'algoithme s'effectue en espace constant.
+\end{itemize}
