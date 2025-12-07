@@ -96,7 +96,7 @@ La fonction à trois cas principaux
 \paragraph{Cas 3: Progression normale} On fait ce que l'on a décrit plus haut dans le rôle de la fonction. On sauvegarde la prochaine valeur de la tortue que l'on nomme \verb|nsp|. Ensuite, on inverse le pointeur \verb|sc.cdr <- bp| (On construit la moitié de chaîne inversée). Finalement, on fait une récursion où:
 \begin{itemize}
     \item \verb|sp| est le nouveau \verb|bp| (ajoute à la chaîne inversée).
-    \item \verb|nsp| est le nouveau \verb|sp| (on a avancé la tortue de un noeud).
+    \item \verb|nsp| est le nouveau \verb|sp| (on a avancé la tortue d'un noeud).
     \item \verb|nfp| est le nouveau \verb|fp| (on a avancé le lièvre de deux noeuds).
 \end{itemize}
 
@@ -145,5 +145,5 @@ Cet algorithme étant tout aussi récursif que celui explicité dans l'échauffe
 Finalement, ce nouvel algorithme permet d'inverser une liste chaînée, tout comme le fait la première méthode, mais avec deux garanties supplémentaires:
 \begin{itemize}
 \item La liste inversée garde la même structure. La chaîne des pointeurs reste la même (grâce à la double inversion dans \verb|tortoise_hare| et dans \verb|back_again|).
-\item La lliste est inversée en espace constant, aucune allocation mémoire n'est faite, que ce soit sur le tas (\textit{heap}) ou sur la pile (\textit{stack}).
+\item La liste est inversée en espace constant, aucune allocation mémoire n'est faite, que ce soit sur le tas (\textit{heap}) ou sur la pile (\textit{stack}).
 \end{itemize}
