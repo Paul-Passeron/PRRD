@@ -1,9 +1,8 @@
 #ifndef LST_H
 #define LST_H
 
-#include <stddef.h>
 #include "common.h"
-
+#include <stddef.h>
 
 struct lst {
   elt_t car;
@@ -17,6 +16,7 @@ lst_t list_reversal(lst_t l);
 lst_t build_lst(elt_t *elts, size_t count);
 
 #ifdef LST_IMPL
+#include "mem.h"
 
 #include <stdlib.h>
 
@@ -47,12 +47,14 @@ lst_t aux(lst_t r, lst_t l) {
 lst_t list_reversal(lst_t l) { return aux(NULL, l); }
 
 lst_t build_lst(elt_t *elts, size_t count) {
+    reset_mem();
   lst_t head = NULL;
   for (int i = count - 1; i >= 0; --i) {
-    lst_t new_head = malloc(sizeof(struct lst));
+    lst_t new_head = (lst_t)malloc(sizeof(struct lst));
     if (!new_head) {
       exit(1);
     }
+    add_to_mem(new_head, elts[i], head);
     new_head->car = elts[i];
     new_head->cdr = head;
     head = new_head;

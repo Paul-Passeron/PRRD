@@ -1,9 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define MEM_IMPL
 #define LST_IMPL
 #include "lst.h"
-
 #define LIST_SHAPE_IMPL
 #include "const_space.h"
 
