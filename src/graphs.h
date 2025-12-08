@@ -2,10 +2,12 @@
 #define GRAPHS_H
 
 #include "common.h"
+#include <cstddef>
+#include <stdio.h>
 
 struct tree {
   struct tree *left;
-  struct tree *rigth;
+  struct tree *right;
   elt_t dat;
 };
 
@@ -20,37 +22,48 @@ typedef struct tree_shape_t {
     int size;
 }tree_shape_t;
 
+bool wrap(tree_t t);
+void visit(tree_t t);
+void morris(tree_t t);
 
-void morris(tree t){
-  tree *current = t;
+#ifdef TREE_IMPL
+
+void visit(tree_t t){
+  printf("%d ", t->dat);
+}
+
+void morris(tree_t t){
+  tree_t current = t;
+  tree_t pred = current->left;
+
   while (current != NULL) {
     if (current->left == NULL) {
-        printf("%d ", current->dat);  
-        current = current->right;  
+        printf("%d ", current->dat);
+        current = current->right;
     }
-    if (p->left == NULL) {
-      visit(p);
-      morris(p->right);  
+    if (pred->left == NULL) {
+      visit(pred);
+      morris(pred->right);
     }
     else {
-        if (warp(p)) {
-            morris(p->left); 
+        if (wrap(pred)) {
+            morris(pred->left);
         }
         else {
-            visit(p);
-            morris(p->right);
+            visit(pred);
+            morris(pred->right);
         }
     }
   }
 }
 
 
-bool wrap (tree t){
-  tree *current = t;
-  tree *pred = current->left;
+bool wrap (tree_t t){
+  tree_t current = t;
+  tree_t pred = current->left;
    while (pred->right != NULL && pred->right != current) {
         pred = pred->right;
-      } 
+      }
       if (pred->right == NULL){
       pred->right = current;
       return true;
@@ -61,9 +74,5 @@ bool wrap (tree t){
       }
 }
 
-void visit(tree t ){
-  printf("%d ", t->data);
-}
-
-
+#endif // TREE_IMPL
 #endif // GRAPHS_H
