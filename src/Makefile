@@ -3,7 +3,7 @@ CFLAGS=-Wall -Wextra -pedantic
 
 all: main
 
-main: list_shape.h lst.h mem.h proj.c
+main: common.h lst.h graphs.h const_space.h mem.h proj.c
 	$(CC) $(CFLAGS) -o main proj.c
 
 clean:

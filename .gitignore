@@ -1,5 +1,5 @@
-./proj
 rapport/*
 !rapport/*.pdf
 !rapport/*.tex
 !rapport/Makefile
+src/main

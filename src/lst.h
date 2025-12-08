@@ -2,8 +2,8 @@
 #define LST_H
 
 #include <stddef.h>
+#include "common.h"
 
-typedef int elt_t;
 
 struct lst {
   elt_t car;

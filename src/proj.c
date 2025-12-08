@@ -5,7 +5,7 @@
 #include "lst.h"
 
 #define LIST_SHAPE_IMPL
-#include "list_shape.h"
+#include "const_space.h"
 
 // Sect.2
 
