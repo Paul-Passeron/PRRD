@@ -4,10 +4,6 @@
 #include "common.h"
 
 
-typedef struct list_shape_t {
-  lst_t *cells;
-  size_t count;
-} list_shape;
 
 void back_again(lst_t bp, lst_t sp, lst_t np);
 void tortoise_hare(

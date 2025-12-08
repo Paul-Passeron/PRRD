@@ -4,12 +4,6 @@
 #include "common.h"
 #include <stddef.h>
 
-struct lst {
-  elt_t car;
-  struct lst *cdr;
-};
-
-typedef struct lst *lst_t;
 
 void print_lst(lst_t l);
 lst_t list_reversal(lst_t l);
