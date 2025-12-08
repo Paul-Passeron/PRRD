@@ -35,45 +35,39 @@ void visit(tree_t t){
 
 void morris(tree_t t){
   tree_t current = t;
-  tree_t pred = current->left;
-
   while (current != NULL) {
     if (current->left == NULL) {
-        printf("%d ", current->dat);
+        visit(current);
         current = current->right;
     }
-    if (pred->left == NULL) {
-      visit(pred);
-      morris(pred->right);
-    }
     else {
-        if (wrap(pred)) {
-            morris(pred->left);
-        }
-        else {
-            visit(pred);
-            morris(pred->right);
-        }
+      if (wrap(current)) {
+          current = current->left;
+      }
+      else {
+          visit(current);
+          current = current-> right;
+      }
     }
   }
 }
 
 
-bool wrap (tree_t t){
-  tree_t current = t;
-  tree_t pred = current->left;
-   while (pred->right != NULL && pred->right != current) {
+bool wrap(tree_t current) {
+  if (current->left == NULL){return false;}
+    tree_t pred = current->left;
+    while (pred->right != NULL && pred->right != current) {
         pred = pred->right;
-      }
-      if (pred->right == NULL){
-      pred->right = current;
-      return true;
-      }
-      else {
-        pred->right = NULL;
-        return false;
-      }
+    }
+    if (pred->right == NULL) {
+        pred->right = current; 
+        return true;          
+    } else {
+        pred->right = NULL;   
+        return false;        
+    }
 }
+
 
 #endif // TREE_IMPL
 #endif // GRAPHS_H
