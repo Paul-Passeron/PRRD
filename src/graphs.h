@@ -2,7 +2,7 @@
 #define GRAPHS_H
 
 #include "common.h"
-#include <cstddef>
+#include <stddef.h>
 #include <stdio.h>
 
 struct tree {
