@@ -4,6 +4,7 @@
 #include "common.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 struct tree {
   struct tree *left;
