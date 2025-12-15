@@ -49,11 +49,12 @@
  */
 
 /*@
-   predicate frame{L1, L2}(list_shape ls)=
-       \forall lst_t p; (\forall int i; 0 <= i < ls.count ==> p != \at(ls.cells[i], L1))
-   ==>
-           \at(p->car, L1) == \at(p->car, L2) &&
-           \at(p->cdr, L1) == \at(p->cdr, L2);
+    predicate frame{L1, L2}(list_shape ls)=
+        \forall int i; 0 <= i < ls.count ==> \at(ls.cells[i], L1) && \at(ls.cells[i], L2) &&
+        \forall lst_t p; (\forall int i; 0 <= i < ls.count ==> p !=
+            \at(ls.cells[i], L1)) ==>
+                \at(p->car, L1) == \at(p->car, L2) &&
+                \at(p->cdr, L1) == \at(p->cdr, L2);
  */
 
 #endif // INDUCTIVE_H
