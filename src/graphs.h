@@ -23,50 +23,49 @@ typedef struct tree_shape_t {
     int size;
 }tree_shape_t;
 
-bool wrap(tree_t t);
+bool warp(tree_t t, tree_t q);
 void visit(tree_t t);
+void traversal(tree_t t);
 void morris(tree_t t);
 
 #ifdef TREE_IMPL
 
-void visit(tree_t t){
-  printf("%d ", t->dat);
+//@ ghost tre_shape_t morris_t;
+//@ ghost int morris_r;
+//@ ghost int morris_c;
+//@ ghost int morris_k;
+
+bool warp(tree_t t, tree_t q) {
+    if (q->right == NULL) {
+        q->right = t;
+        return true;
+    }
+    if (q->right == t) {
+        q->right = NULL;
+        return false;
+    }
+    return warp(t, q->right);
 }
 
-void morris(tree_t t){
-  tree_t current = t;
-  while (current != NULL) {
-    if (current->left == NULL) {
-        visit(current);
-        current = current->right;
-    }
-    else {
-      if (wrap(current)) {
-          current = current->left;
-      }
-      else {
-          visit(current);
-          current = current-> right;
-      }
-    }
-  }
+void traversal(tree_t t) {
+    if (t != NULL)
+        morris(t);
 }
 
+void visit(tree_t t) {
+    printf("%d ", t->dat);
+}
 
-bool wrap(tree_t current) {
-  if (current->left == NULL){return false;}
-    tree_t pred = current->left;
-    while (pred->right != NULL && pred->right != current) {
-        pred = pred->right;
-    }
-    if (pred->right == NULL) {
-        pred->right = current; 
-        return true;          
+void morris(tree_t t) {
+    if (t->left != NULL && warp(t, t->left)) {
+        morris(t->left);
     } else {
-        pred->right = NULL;   
-        return false;        
+        visit(t);
+        if (t->right != NULL)
+            morris(t->right);
     }
 }
+
 
 
 #endif // TREE_IMPL
