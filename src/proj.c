@@ -4,7 +4,7 @@
 #define MEM_IMPL
 #define LST_IMPL
 #include "lst.h"
-#define LIST_SHAPE_IMPL
+#define CONST_SPACE_IMPL
 #include "const_space.h"
 
 // Sect.2
