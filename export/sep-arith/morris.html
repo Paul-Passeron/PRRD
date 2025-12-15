@@ -1,0 +1,446 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<link rel="stylesheet" href="style.css" type="text/css">
+<title>morris.html</title>
+</head>
+<body>
+<div class="why3doc">
+<pre><span class="keyword">module</span> <a name="MBTree_">MBTree</a>
+  <span class="keyword">use</span> map.<a href="map.html#Map_">Map</a>
+
+  <span class="keyword">type</span> <a name="loc_4">loc</a>
+
+  <span class="keyword">val</span> <a name="eq_loc_6">eq_loc</a> (l1 l2: <a href="#loc_4">loc</a>) : bool
+    <span class="keyword">ensures</span> { result &lt;-&gt; l1 = l2 }
+
+  <span class="keyword">val</span> <span class="keyword">constant</span> <a name="null_9">null</a> : <a href="#loc_4">loc</a>
+
+  <span class="keyword">type</span> <a name="elt_11">elt</a>
+
+  <span class="keyword">type</span> <a name="mem_13">mem</a> = <span class="keyword">abstract</span> {
+    <span class="keyword">mutable</span> <a name="mdat_14">mdat</a>: <a href="#loc_4">loc</a> -&gt; <a href="#elt_11">elt</a>;
+    <span class="keyword">mutable</span> <a name="mlst_15">mlst</a>: <a href="#loc_4">loc</a> -&gt; <a href="#loc_4">loc</a>;
+    <span class="keyword">mutable</span> <a name="mrst_16">mrst</a>: <a href="#loc_4">loc</a> -&gt; <a href="#loc_4">loc</a>;
+  }
+
+  <span class="keyword">val</span> <a name="mem_19">mem</a>: <a href="#mem_13">mem</a>
+
+  <span class="keyword">val</span> <a name="dat_21">dat</a> (p: <a href="#loc_4">loc</a>) : <a href="#elt_11">elt</a>
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#null_9">null</a> }
+    <span class="keyword">ensures</span>  { result = <a href="#mem_19">mem</a>.<a href="#mdat_14">mdat</a> p }
+
+  <span class="keyword">val</span> <a name="set_dat_25">set_dat</a> (p: <a href="#loc_4">loc</a>) (v: <a href="#elt_11">elt</a>) : unit
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#null_9">null</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_19">mem</a>.<a href="#mdat_14">mdat</a> }
+    <span class="keyword">ensures</span>  { <a href="#mem_19">mem</a>.<a href="#mdat_14">mdat</a> = (<span class="keyword">old</span> <a href="#mem_19">mem</a>.<a href="#mdat_14">mdat</a>)[p &lt;- v] }
+
+  <span class="keyword">val</span> <a name="lst_30">lst</a> (p: <a href="#loc_4">loc</a>) : <a href="#loc_4">loc</a>
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#null_9">null</a> }
+    <span class="keyword">ensures</span>  { result = <a href="#mem_19">mem</a>.<a href="#mlst_15">mlst</a> p }
+
+  <span class="keyword">val</span> <a name="set_lst_34">set_lst</a> (p: <a href="#loc_4">loc</a>) (v: <a href="#loc_4">loc</a>) : unit
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#null_9">null</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_19">mem</a>.<a href="#mlst_15">mlst</a> }
+    <span class="keyword">ensures</span>  { <a href="#mem_19">mem</a>.<a href="#mlst_15">mlst</a> = (<span class="keyword">old</span> <a href="#mem_19">mem</a>.<a href="#mlst_15">mlst</a>)[p &lt;- v] }
+
+  <span class="keyword">val</span> <a name="rst_39">rst</a> (p: <a href="#loc_4">loc</a>) : <a href="#loc_4">loc</a>
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#null_9">null</a> }
+    <span class="keyword">ensures</span>  { result = <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> p }
+
+  <span class="keyword">val</span> <a name="set_rst_43">set_rst</a> (p: <a href="#loc_4">loc</a>) (v: <a href="#loc_4">loc</a>) : unit
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#null_9">null</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> }
+    <span class="keyword">ensures</span>  { <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> = (<span class="keyword">old</span> <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a>)[p &lt;- v] }
+<span class="keyword">end</span>
+
+<span class="keyword">module</span> <a name="MorrisTraversal_">MorrisTraversal</a>
+
+  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> map.<a href="map.html#Map_">Map</a>
+  <span class="keyword">use</span> <a href="#MBTree_">MBTree</a>
+
+  <span class="keyword">type</span> <a name="tree_shape_55">tree_shape</a> = {
+    <a name="cell_56">cell</a> : int -&gt; <a href="#loc_4">loc</a>;  <span class="comment">(* location *)</span>
+    <a name="clmd_57">clmd</a> : int -&gt; int;  <span class="comment">(* left-most descendant *)</span>
+    <a name="clst_58">clst</a> : int -&gt; int;  <span class="comment">(* left subtree *)</span>
+    <a name="crst_59">crst</a> : int -&gt; int;  <span class="comment">(* right subtree *)</span>
+    <a name="crmd_60">crmd</a> : int -&gt; int;  <span class="comment">(* right-most descendant *)</span>
+    <a name="size_61">size</a> : int;
+  }
+  <span class="keyword">invariant</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> size }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt; cell i &lt;&gt; <a href="#null_9">null</a> }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt;
+      <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt; i &lt;&gt; j -&gt; cell i &lt;&gt; cell j }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt;
+      0 <a href="int.html#infix%20%3C=_25">&lt;=</a> clmd i = clmd (clst i) <a href="int.html#infix%20%3C=_25">&lt;=</a> clst i <a href="int.html#infix%20%3C=_25">&lt;=</a>
+        i <a href="int.html#infix%20%3C=_25">&lt;=</a> crst i <a href="int.html#infix%20%3C=_25">&lt;=</a> crmd (crst i) = crmd i <a href="int.html#infix%20%3C_21">&lt;</a> size }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt; clst i = i -&gt; clmd i = i }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt; crst i = i -&gt; crmd i = i }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt; clst i <a href="int.html#infix%20%3C_21">&lt;</a> i -&gt; crmd (clst i) = i<a href="int.html#infix%20-_23">-</a>1 }
+  <span class="keyword">invariant</span> {
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size -&gt; crst i <a href="int.html#infix%20%3E_24">&gt;</a> i -&gt; clmd (crst i) = i<a href="int.html#infix%20+_19">+</a>1 }
+
+  <span class="keyword">predicate</span> <a name="wf_lst_82">wf_lst</a> (t: <a href="#tree_shape_55">tree_shape</a>) (m: <a href="#mem_13">mem</a>) (lo hi: int) =
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> lo <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> hi <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#size_61">size</a> -&gt;
+      (t.<a href="#clmd_57">clmd</a> i = t.<a href="#clst_58">clst</a> i = i             /\ m.<a href="#mlst_15">mlst</a> (t.<a href="#cell_56">cell</a> i) = <a href="#null_9">null</a>) \/
+      (t.<a href="#clst_58">clst</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> (t.<a href="#clst_58">clst</a> i) = i<a href="int.html#infix%20-_23">-</a>1 /\ m.<a href="#mlst_15">mlst</a> (t.<a href="#cell_56">cell</a> i) = t.<a href="#cell_56">cell</a> (t.<a href="#clst_58">clst</a> i))
+
+  <span class="keyword">predicate</span> <a name="wf_rst_87">wf_rst</a> (t: <a href="#tree_shape_55">tree_shape</a>) (m: <a href="#mem_13">mem</a>) (lo hi: int) =
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> lo <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> hi <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#size_61">size</a> -&gt;
+      (i = t.<a href="#crst_59">crst</a> i = t.<a href="#crmd_60">crmd</a> i             /\ m.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> i) = <a href="#null_9">null</a>) \/
+      (i<a href="int.html#infix%20+_19">+</a>1 = t.<a href="#clmd_57">clmd</a> (t.<a href="#crst_59">crst</a> i) <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crst_59">crst</a> i /\ m.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> i) = t.<a href="#cell_56">cell</a> (t.<a href="#crst_59">crst</a> i))
+
+  <span class="keyword">predicate</span> <a name="warped_rst_92">warped_rst</a> (t: <a href="#tree_shape_55">tree_shape</a>) (m: <a href="#mem_13">mem</a>) (lo hi: int) =
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> lo <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> hi <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#size_61">size</a> -&gt;
+      (i = t.<a href="#crst_59">crst</a> i = t.<a href="#crmd_60">crmd</a> i /\
+        ((i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 /\ t.<a href="#clmd_57">clmd</a> (i<a href="int.html#infix%20+_19">+</a>1) <a href="int.html#infix%20%3C=_25">&lt;=</a> lo /\ m.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> i) = t.<a href="#cell_56">cell</a> (i<a href="int.html#infix%20+_19">+</a>1)) \/
+         (i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 /\ lo <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#clmd_57">clmd</a> (i<a href="int.html#infix%20+_19">+</a>1)  /\ m.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> i) = <a href="#null_9">null</a>) \/
+         (i = t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 /\                       m.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> i) = <a href="#null_9">null</a>))) \/
+      (i<a href="int.html#infix%20+_19">+</a>1 = t.<a href="#clmd_57">clmd</a> (t.<a href="#crst_59">crst</a> i) <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crst_59">crst</a> i   /\ m.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> i) = t.<a href="#cell_56">cell</a> (t.<a href="#crst_59">crst</a> i))
+
+  <span class="keyword">predicate</span> <a name="frame_100">frame</a> (t: <a href="#tree_shape_55">tree_shape</a>) (m1 m2: <a href="#mem_13">mem</a>) =
+    <span class="keyword">forall</span> p. (<span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> -&gt; p &lt;&gt; t.<a href="#cell_56">cell</a> i) -&gt;
+      m1.<a href="#mdat_14">mdat</a> p = m2.<a href="#mdat_14">mdat</a> p /\ m1.<a href="#mlst_15">mlst</a> p = m2.<a href="#mlst_15">mlst</a> p /\ m1.<a href="#mrst_16">mrst</a> p = m2.<a href="#mrst_16">mrst</a> p
+
+  <span class="keyword">let</span> <span class="keyword">lemma</span> <a name="cover_104">cover</a> (t: <a href="#tree_shape_55">tree_shape</a>) (r : int)
+    <span class="keyword">requires</span> { 0 = t.<a href="#clmd_57">clmd</a> r <a href="int.html#infix%20%3C=_25">&lt;=</a> r <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> r = t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 }
+    <span class="keyword">ensures</span>  { <span class="keyword">forall</span> i j . 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> j <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> -&gt;
+                 i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#clmd_57">clmd</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> i \/
+                 t.<a href="#crmd_60">crmd</a> i <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#clmd_57">clmd</a> j \/
+                 t.<a href="#clmd_57">clmd</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#clmd_57">clmd</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> i <a href="int.html#infix%20%3C_21">&lt;</a> j }
+  = <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">lemma</span> subtree (k i: int)
+      <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> }
+      <span class="keyword">requires</span> { t.<a href="#clmd_57">clmd</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> k }
+      <span class="keyword">variant</span>  { t.<a href="#crmd_60">crmd</a> k <a href="int.html#infix%20-_23">-</a> t.<a href="#clmd_57">clmd</a> k }
+      <span class="keyword">ensures</span>  { t.<a href="#clmd_57">clmd</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#clmd_57">clmd</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> (t.<a href="#clst_58">clst</a> k) = k<a href="int.html#infix%20-_23">-</a>1 \/
+                 i = k \/
+                 k<a href="int.html#infix%20+_19">+</a>1 = t.<a href="#clmd_57">clmd</a> (t.<a href="#crst_59">crst</a> k) <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#clmd_57">clmd</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> k }
+    = <span class="keyword">if</span> i <a href="int.html#infix%20%3C_21">&lt;</a> k <span class="keyword">then</span> subtree (t.<a href="#clst_58">clst</a> k) i <span class="keyword">else</span>
+      <span class="keyword">if</span> k <a href="int.html#infix%20%3C_21">&lt;</a> i <span class="keyword">then</span> subtree (t.<a href="#crst_59">crst</a> k) i <span class="keyword">in</span>
+    <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">lemma</span> subcover (k i j: int)
+      <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> }
+      <span class="keyword">requires</span> { t.<a href="#clmd_57">clmd</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> k }
+      <span class="keyword">variant</span>  { t.<a href="#crmd_60">crmd</a> k <a href="int.html#infix%20-_23">-</a> t.<a href="#clmd_57">clmd</a> k }
+      <span class="keyword">ensures</span>  { i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#clmd_57">clmd</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> i \/
+                 t.<a href="#crmd_60">crmd</a> i <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#clmd_57">clmd</a> j \/
+                 t.<a href="#clmd_57">clmd</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#clmd_57">clmd</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> i <a href="int.html#infix%20%3C_21">&lt;</a> j }
+    = <span class="keyword">if</span> j <a href="int.html#infix%20%3C_21">&lt;</a> k <span class="keyword">then</span> subcover (t.<a href="#clst_58">clst</a> k) i j <span class="keyword">else</span>
+      <span class="keyword">if</span> k <a href="int.html#infix%20%3C_21">&lt;</a> i <span class="keyword">then</span> subcover (t.<a href="#crst_59">crst</a> k) i j <span class="keyword">in</span> ()
+
+  <span class="keyword">use</span> seq.<a href="seq.html#Seq_">Seq</a>
+
+  <span class="keyword">val</span> ref <a name="trace_131">trace</a> : <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <a name="morris_133">morris</a> (<span class="keyword">ghost</span> t: <a href="#tree_shape_55">tree_shape</a>) (<span class="keyword">ghost</span> r: int) (<span class="keyword">ghost</span> c: int) (<span class="keyword">ghost</span> k: int) (p: <a href="#loc_4">loc</a>) : unit
+    <span class="keyword">requires</span> { 0 = t.<a href="#clmd_57">clmd</a> r <a href="int.html#infix%20%3C=_25">&lt;=</a> r <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#crmd_60">crmd</a> r = t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 }
+    <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> c = <a href="#trace_131">trace</a>.<a href="seq.html#length_19">length</a> <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> }
+    <span class="keyword">requires</span> { p = t.<a href="#cell_56">cell</a> k }
+    <span class="keyword">requires</span> { <a href="#wf_lst_82">wf_lst</a> t <a href="#mem_19">mem</a> 0 t.<a href="#size_61">size</a> }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> c -&gt; <a href="#trace_131">trace</a>[i] = t.<a href="#cell_56">cell</a> i }
+    <span class="keyword">requires</span> { c <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; c = t.<a href="#clmd_57">clmd</a> k /\ <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 k }
+    <span class="keyword">requires</span> { c = k /\ t.<a href="#clst_58">clst</a> k <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 (k<a href="int.html#infix%20-_23">-</a>1) /\
+                                          <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> (k<a href="int.html#infix%20-_23">-</a>1)) = p }
+    <span class="keyword">requires</span> { c = k /\ t.<a href="#clst_58">clst</a> k = k -&gt; <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 k }
+    <span class="keyword">requires</span> { <a href="#warped_rst_92">warped_rst</a> t <a href="#mem_19">mem</a> k t.<a href="#size_61">size</a> }
+    <span class="keyword">variant</span>  { t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>c, k }
+    <span class="keyword">ensures</span>  { <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 t.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <a href="#trace_131">trace</a>.<a href="seq.html#length_19">length</a> = t.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> -&gt; <a href="#trace_131">trace</a>[i] = t.<a href="#cell_56">cell</a> i }
+    <span class="keyword">ensures</span>  { <a href="#frame_100">frame</a> t <a href="#mem_19">mem</a> (<span class="keyword">old</span> <a href="#mem_19">mem</a>) }
+  =
+    <span class="keyword">let</span> <span class="keyword">rec</span> warp (<span class="keyword">ghost</span> j: int) (q: <a href="#loc_4">loc</a>) : bool
+      <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> k }
+      <span class="keyword">requires</span> { q = t.<a href="#cell_56">cell</a> j }
+      <span class="keyword">requires</span> { t.<a href="#crmd_60">crmd</a> j = k<a href="int.html#infix%20-_23">-</a>1 }
+      <span class="keyword">requires</span> { c <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 k }
+      <span class="keyword">requires</span> { c = k -&gt; <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 (k<a href="int.html#infix%20-_23">-</a>1) /\
+                          <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> (t.<a href="#cell_56">cell</a> (k<a href="int.html#infix%20-_23">-</a>1)) = p }
+      <span class="keyword">variant</span>  { k<a href="int.html#infix%20-_23">-</a>j }
+      <span class="keyword">ensures</span>  { result &lt;-&gt; c &lt;&gt; k }
+      <span class="keyword">ensures</span>  { c = k -&gt; <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> = Map.(<span class="keyword">old</span> <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a>[t.<a href="#cell_56">cell</a> (k<a href="int.html#infix%20-_23">-</a>1) &lt;- <a href="#null_9">null</a>]) }
+      <span class="keyword">ensures</span>  { c <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> = Map.(<span class="keyword">old</span> <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a>[t.<a href="#cell_56">cell</a> (k<a href="int.html#infix%20-_23">-</a>1) &lt;- p]) }
+      <span class="keyword">ensures</span>  { c <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; <a href="#warped_rst_92">warped_rst</a> t <a href="#mem_19">mem</a> (t.<a href="#clst_58">clst</a> k) k }
+      <span class="keyword">ensures</span>  { <a href="#frame_100">frame</a> t <a href="#mem_19">mem</a> (<span class="keyword">old</span> <a href="#mem_19">mem</a>) }
+    = <span class="keyword">if</span> <a href="#eq_loc_6">eq_loc</a> q.<a href="#rst_39">rst</a> <a href="#null_9">null</a> <span class="keyword">then</span> <span class="keyword">begin</span>
+        <a href="#set_rst_43">set_rst</a> q p; <span class="keyword">true</span>
+      <span class="keyword">end</span> <span class="keyword">else</span> <span class="keyword">if</span> <a href="#eq_loc_6">eq_loc</a> q.<a href="#rst_39">rst</a> p <span class="keyword">then</span> <span class="keyword">begin</span>
+        <a href="#set_rst_43">set_rst</a> q <a href="#null_9">null</a>; <span class="keyword">false</span>
+      <span class="keyword">end</span> <span class="keyword">else</span>
+        warp (t.<a href="#crst_59">crst</a> j) q.<a href="#rst_39">rst</a>
+    <span class="keyword">in</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> <a href="#eq_loc_6">eq_loc</a> p.<a href="#lst_30">lst</a> <a href="#null_9">null</a> &amp;&amp; warp (t.<a href="#clst_58">clst</a> k) p.<a href="#lst_30">lst</a> <span class="keyword">then</span>
+      morris t r c (t.<a href="#clst_58">clst</a> k) p.<a href="#lst_30">lst</a>
+    <span class="keyword">else</span> <span class="keyword">begin</span>
+      <a href="#trace_131">trace</a> &lt;- <a href="seq.html#snoc_89">snoc</a> <a href="#trace_131">trace</a> p;
+      <span class="keyword">if</span> <span class="keyword">not</span> <a href="#eq_loc_6">eq_loc</a> p.<a href="#rst_39">rst</a> <a href="#null_9">null</a> <span class="keyword">then</span> <span class="keyword">begin</span>
+        <span class="keyword">ghost</span> <a href="#cover_104">cover</a> t r;
+        morris t r (c<a href="int.html#infix%20+_19">+</a>1) (<span class="keyword">if</span> t.<a href="#crst_59">crst</a> k <a href="int.html#infix%20=_16">=</a> k <span class="keyword">then</span> k<a href="int.html#infix%20+_19">+</a>1 <span class="keyword">else</span> t.<a href="#crst_59">crst</a> k) p.<a href="#rst_39">rst</a>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <a name="traversal_180">traversal</a> (<span class="keyword">ghost</span> t: <a href="#tree_shape_55">tree_shape</a>) (<span class="keyword">ghost</span> k: int) (p: <a href="#loc_4">loc</a>) : unit
+    <span class="keyword">requires</span> { <a href="#trace_131">trace</a>.<a href="seq.html#length_19">length</a> = 0 }
+    <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> t.<a href="#size_61">size</a> }
+    <span class="keyword">requires</span> { <span class="keyword">if</span> t.<a href="#size_61">size</a> = 0 <span class="keyword">then</span> p = <a href="#null_9">null</a>
+               <span class="keyword">else</span> k <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> /\ t.<a href="#cell_56">cell</a> k = p /\ t.<a href="#clmd_57">clmd</a> k = 0 /\ t.<a href="#crmd_60">crmd</a> k = t.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 }
+    <span class="keyword">requires</span> { <a href="#wf_lst_82">wf_lst</a> t <a href="#mem_19">mem</a> 0 t.<a href="#size_61">size</a> }
+    <span class="keyword">requires</span> { <a href="#wf_rst_87">wf_rst</a> t <a href="#mem_19">mem</a> 0 t.<a href="#size_61">size</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a>, <a href="#trace_131">trace</a> }
+    <span class="keyword">ensures</span>  { <span class="keyword">forall</span> q. <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> q = <span class="keyword">old</span> <a href="#mem_19">mem</a>.<a href="#mrst_16">mrst</a> q }
+    <span class="keyword">ensures</span>  { <a href="#trace_131">trace</a>.<a href="seq.html#length_19">length</a> = t.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> t.<a href="#size_61">size</a> -&gt; <a href="#trace_131">trace</a>[i] = t.<a href="#cell_56">cell</a> i }
+  =
+    <span class="keyword">if</span> <span class="keyword">not</span> <a href="#eq_loc_6">eq_loc</a> p <a href="#null_9">null</a> <span class="keyword">then</span> <a href="#morris_133">morris</a> t k 0 k p
+
+<span class="keyword">end</span>
+
+<span class="keyword">module</span> <a name="MorrisSpec_">MorrisSpec</a>
+
+  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> map.<a href="map.html#Map_">Map</a>
+  <span class="keyword">use</span> bintree.<a href="bintree.html#Tree_">Tree</a>
+  <span class="keyword">use</span> bintree.<a href="bintree.html#Size_">Size</a> <span class="keyword">as</span> BS
+  <span class="keyword">use</span> <a href="#MBTree_">MBTree</a>
+  <span class="keyword">use</span> <a href="#MorrisTraversal_">MorrisTraversal</a>
+
+  <span class="keyword">function</span> <a name="footprint_205">footprint</a> (m: <a href="#mem_13">mem</a>) (p: <a href="#loc_4">loc</a>) (t: <a href="bintree.html#tree_6">tree</a> <a href="#elt_11">elt</a>) : <a href="#loc_4">loc</a> -&gt; bool
+  = <span class="keyword">match</span> t <span class="keyword">with</span>
+    | <a href="bintree.html#Empty_6">Empty</a>      -&gt;
+        (<span class="keyword">fun</span> _ -&gt; <span class="keyword">false</span>)
+    | <a href="bintree.html#Node_6">Node</a> l _ r -&gt;
+        <span class="keyword">let</span> lftp = <a href="#footprint_205">footprint</a> m (m.<a href="#mlst_15">mlst</a> p) l <span class="keyword">in</span>
+        <span class="keyword">let</span> rftp = <a href="#footprint_205">footprint</a> m (m.<a href="#mrst_16">mrst</a> p) r <span class="keyword">in</span>
+        (<span class="keyword">fun</span> q -&gt; q = p || lftp q || rftp q)
+    <span class="keyword">end</span>
+
+  <span class="keyword">predicate</span> <a name="rooted_tree_215">rooted_tree</a> (m: <a href="#mem_13">mem</a>) (p: <a href="#loc_4">loc</a>) (t: <a href="bintree.html#tree_6">tree</a> <a href="#elt_11">elt</a>)
+  = <span class="keyword">match</span> t <span class="keyword">with</span>
+    | <a href="bintree.html#Empty_6">Empty</a>      -&gt;
+        p = <a href="#null_9">null</a>
+    | <a href="bintree.html#Node_6">Node</a> l _ r -&gt;
+        p &lt;&gt; <a href="#null_9">null</a> &amp;&amp;
+        <a href="#rooted_tree_215">rooted_tree</a> m (m.<a href="#mlst_15">mlst</a> p) l &amp;&amp;
+        <a href="#rooted_tree_215">rooted_tree</a> m (m.<a href="#mrst_16">mrst</a> p) r &amp;&amp;
+        <span class="keyword">let</span> lftp = <a href="#footprint_205">footprint</a> m (m.<a href="#mlst_15">mlst</a> p) l <span class="keyword">in</span>
+        <span class="keyword">let</span> rftp = <a href="#footprint_205">footprint</a> m (m.<a href="#mrst_16">mrst</a> p) r <span class="keyword">in</span>
+        <span class="keyword">not</span> (lftp p) &amp;&amp; <span class="keyword">not</span> (rftp p) &amp;&amp;
+        <span class="keyword">forall</span> q. lftp q -&gt; rftp q -&gt; <span class="keyword">false</span>
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <a name="append_cells_229">append_cells</a> (lcell: int -&gt; <a href="#loc_4">loc</a>) (lsz: int)
+                   (p: <a href="#loc_4">loc</a>)
+                   (rcell: int -&gt; <a href="#loc_4">loc</a>) (rsz: int) : int -&gt; <a href="#loc_4">loc</a>
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt; <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt;
+               i &lt;&gt; j -&gt; lcell i &lt;&gt; lcell j }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt; lcell i &lt;&gt; p }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt; <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt;
+               i &lt;&gt; j -&gt; rcell i &lt;&gt; rcell j }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt; rcell j &lt;&gt; p }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt;
+               <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt; lcell i &lt;&gt; rcell j }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt; result i = lcell i }
+    <span class="keyword">ensures</span> { result lsz = p }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. lsz <a href="int.html#infix%20%3C_21">&lt;</a> i -&gt; result i = rcell (i <a href="int.html#infix%20-_23">-</a> lsz <a href="int.html#infix%20-_23">-</a> 1) }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rsz -&gt;
+              <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> lsz <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rsz -&gt;
+              i &lt;&gt; j -&gt; result i &lt;&gt; result j }
+  = (<span class="keyword">fun</span> i -&gt; <span class="keyword">if</span> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz <span class="keyword">then</span> lcell i <span class="keyword">else</span>
+              <span class="keyword">if</span> i <a href="int.html#infix%20=_16">=</a> lsz <span class="keyword">then</span> p <span class="keyword">else</span>
+              rcell (i <a href="int.html#infix%20-_23">-</a> lsz <a href="int.html#infix%20-_23">-</a> 1))
+
+  <span class="keyword">let</span> <a name="append_fun_250">append_fun</a> (lf: int -&gt; int)
+                 (k: int) (v: int)
+                 (rf: int -&gt; int) : int -&gt; int
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; result i = lf i }
+    <span class="keyword">ensures</span> { result k = v }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. k <a href="int.html#infix%20%3C_21">&lt;</a> i -&gt; result i = k <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rf (i <a href="int.html#infix%20-_23">-</a> k <a href="int.html#infix%20-_23">-</a> 1) }
+  = (<span class="keyword">fun</span> i -&gt; <span class="keyword">if</span> i <a href="int.html#infix%20%3C_21">&lt;</a> k <span class="keyword">then</span> lf i <span class="keyword">else</span>
+              <span class="keyword">if</span> i <a href="int.html#infix%20=_16">=</a> k <span class="keyword">then</span> v <span class="keyword">else</span>
+              k <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rf (i <a href="int.html#infix%20-_23">-</a> k <a href="int.html#infix%20-_23">-</a> 1))
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">ghost</span> <a name="shape_of_tree_260">shape_of_tree</a> (p: <a href="#loc_4">loc</a>) (t: <a href="bintree.html#tree_6">tree</a> <a href="#elt_11">elt</a>) : (ts: <a href="#tree_shape_55">tree_shape</a>, k: int)
+    <span class="keyword">requires</span> { <a href="#rooted_tree_215">rooted_tree</a> <a href="#mem_19">mem</a> p t }
+    <span class="keyword">variant</span>  { t }
+    <span class="keyword">ensures</span>  { ts.<a href="#size_61">size</a> = BS.<a href="bintree.html#size_21">size</a> t }
+    <span class="comment">(* preconditions of `traversal` *)</span>
+    <span class="keyword">ensures</span>  { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> ts.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { 0 = ts.<a href="#size_61">size</a> -&gt; p = <a href="#null_9">null</a> }
+    <span class="keyword">ensures</span>  { 0 <a href="int.html#infix%20%3C_21">&lt;</a> ts.<a href="#size_61">size</a> -&gt; k <a href="int.html#infix%20%3C_21">&lt;</a> ts.<a href="#size_61">size</a> /\ ts.<a href="#cell_56">cell</a> k = p /\ ts.<a href="#clmd_57">clmd</a> k = 0 /\ ts.<a href="#crmd_60">crmd</a> k = ts.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 }
+    <span class="keyword">ensures</span>  { <a href="#wf_lst_82">wf_lst</a> ts <a href="#mem_19">mem</a> 0 ts.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <a href="#wf_rst_87">wf_rst</a> ts <a href="#mem_19">mem</a> 0 ts.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <span class="keyword">forall</span> q. <a href="#footprint_205">footprint</a> <a href="#mem_19">mem</a> p t q &lt;-&gt;
+                 <span class="keyword">exists</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ts.<a href="#size_61">size</a> /\ q = ts.<a href="#cell_56">cell</a> i }
+  = <span class="keyword">match</span> t <span class="keyword">with</span>
+    | <a href="bintree.html#Empty_6">Empty</a> -&gt;
+        { <a href="#cell_56">cell</a> = (<span class="keyword">fun</span> _ -&gt; <a href="#null_9">null</a>);
+          <a href="#clmd_57">clmd</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#clst_58">clst</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#crst_59">crst</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#crmd_60">crmd</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#size_61">size</a> = 0 },
+        0
+    | <a href="bintree.html#Node_6">Node</a> l _ r -&gt;
+        <span class="keyword">let</span> lts, kl = shape_of_tree p.<a href="#lst_30">lst</a> l <span class="keyword">in</span>
+        <span class="keyword">let</span> k = lts.<a href="#size_61">size</a> <span class="keyword">in</span>
+        <span class="keyword">let</span> rts, kr = shape_of_tree p.<a href="#rst_39">rst</a> r <span class="keyword">in</span>
+        <span class="keyword">let</span> kr = <span class="keyword">if</span> rts.<a href="#size_61">size</a> <a href="int.html#infix%20=_16">=</a> 0 <span class="keyword">then</span> k <span class="keyword">else</span> k <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> kr <span class="keyword">in</span>
+        <span class="keyword">let</span> n = lts.<a href="#size_61">size</a> <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rts.<a href="#size_61">size</a> <span class="keyword">in</span>
+        { <a href="#cell_56">cell</a> = <a href="#append_cells_229">append_cells</a> lts.<a href="#cell_56">cell</a> k p     rts.<a href="#cell_56">cell</a> rts.<a href="#size_61">size</a>;
+          <a href="#clmd_57">clmd</a> = <a href="#append_fun_250">append_fun</a>   lts.<a href="#clmd_57">clmd</a> k 0     rts.<a href="#clmd_57">clmd</a>;
+          <a href="#clst_58">clst</a> = <a href="#append_fun_250">append_fun</a>   lts.<a href="#clst_58">clst</a> k kl    rts.<a href="#clst_58">clst</a>;
+          <a href="#crst_59">crst</a> = <a href="#append_fun_250">append_fun</a>   lts.<a href="#crst_59">crst</a> k kr    rts.<a href="#crst_59">crst</a>;
+          <a href="#crmd_60">crmd</a> = <a href="#append_fun_250">append_fun</a>   lts.<a href="#crmd_60">crmd</a> k (n<a href="int.html#infix%20-_23">-</a>1) rts.<a href="#crmd_60">crmd</a>;
+          <a href="#size_61">size</a> = n;
+        },
+        k
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+<span class="keyword">module</span> <a name="MorrisSpecBis_">MorrisSpecBis</a>
+
+  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> map.<a href="map.html#Map_">Map</a>
+  <span class="keyword">use</span> bintree.<a href="bintree.html#Tree_">Tree</a>
+  <span class="keyword">use</span> seq.<a href="seq.html#Seq_">Seq</a>
+  <span class="keyword">use</span> seq.<a href="seq.html#Distinct_">Distinct</a>
+  <span class="keyword">use</span> <a href="#MBTree_">MBTree</a>
+  <span class="keyword">use</span> <a href="#MorrisTraversal_">MorrisTraversal</a>
+
+  <span class="keyword">function</span> <a name="inorder_309">inorder</a> (t: <a href="bintree.html#tree_6">tree</a> <a href="#loc_4">loc</a>) : <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>
+  = <span class="keyword">match</span> t <span class="keyword">with</span>
+    | <a href="bintree.html#Empty_6">Empty</a>      -&gt;
+        <a href="seq.html#empty_56">empty</a>
+    | <a href="bintree.html#Node_6">Node</a> l p r -&gt;
+        <a href="#inorder_309">inorder</a> l <a href="seq.html#infix%20++_116">++</a> <a href="seq.html#cons_82">cons</a> p (<a href="#inorder_309">inorder</a> r)
+    <span class="keyword">end</span>
+
+  <span class="keyword">predicate</span> <a name="rooted_tree_317">rooted_tree</a> (m: <a href="#mem_13">mem</a>) (p: <a href="#loc_4">loc</a>) (t: <a href="bintree.html#tree_6">tree</a> <a href="#loc_4">loc</a>)
+  = <span class="keyword">match</span> t <span class="keyword">with</span>
+    | <a href="bintree.html#Empty_6">Empty</a>      -&gt;
+        p = <a href="#null_9">null</a>
+    | <a href="bintree.html#Node_6">Node</a> l x r -&gt;
+        p = x &amp;&amp;
+        <a href="#rooted_tree_317">rooted_tree</a> m (m.<a href="#mlst_15">mlst</a> p) l &amp;&amp;
+        <a href="#rooted_tree_317">rooted_tree</a> m (m.<a href="#mrst_16">mrst</a> p) r
+    <span class="keyword">end</span>
+
+  <span class="keyword">lemma</span> <a name="distinct_left'lemma_327">distinct_left</a>:
+    <span class="keyword">forall</span> s1 s2: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="seq.html#distinct_335">distinct</a> (s1 <a href="seq.html#infix%20++_116">++</a> s2) -&gt; <a href="seq.html#distinct_335">distinct</a> s1
+  <span class="keyword">lemma</span> <a name="distinct_right'lemma_329">distinct_right</a>:
+    <span class="keyword">forall</span> s1 s2: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="seq.html#distinct_335">distinct</a> (s1 <a href="seq.html#infix%20++_116">++</a> s2) -&gt; <a href="seq.html#distinct_335">distinct</a> s2
+  <span class="keyword">lemma</span> <a name="distinct_cons1'lemma_331">distinct_cons1</a>:
+    <span class="keyword">forall</span> x: <a href="#loc_4">loc</a>, s: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="seq.html#distinct_335">distinct</a> (<a href="seq.html#cons_82">cons</a> x s) -&gt; <a href="seq.html#distinct_335">distinct</a> s
+  <span class="keyword">lemma</span> <a name="distinct_cons2'lemma_333">distinct_cons2</a>:
+    <span class="keyword">forall</span> x: <a href="#loc_4">loc</a>, s: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="seq.html#distinct_335">distinct</a> (<a href="seq.html#cons_82">cons</a> x s) -&gt;
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> <a href="seq.html#length_19">length</a> s -&gt; x &lt;&gt; s[i]
+
+  <span class="keyword">predicate</span> <a name="not_null_337">not_null</a> (s: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>)
+  = <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> <a href="seq.html#length_19">length</a> s -&gt; s[i] &lt;&gt; <a href="#null_9">null</a>
+
+  <span class="keyword">lemma</span> <a name="not_null_left'lemma_340">not_null_left</a>:
+    <span class="keyword">forall</span> s1 s2: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="#not_null_337">not_null</a> (s1 <a href="seq.html#infix%20++_116">++</a> s2) -&gt; <a href="#not_null_337">not_null</a> s1
+  <span class="keyword">lemma</span> <a name="not_null_right'lemma_342">not_null_right</a>:
+    <span class="keyword">forall</span> s1 s2: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="#not_null_337">not_null</a> (s1 <a href="seq.html#infix%20++_116">++</a> s2) -&gt; <a href="#not_null_337">not_null</a> s2
+  <span class="keyword">lemma</span> <a name="not_null_cons1'lemma_344">not_null_cons1</a>:
+    <span class="keyword">forall</span> x: <a href="#loc_4">loc</a>, s: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="#not_null_337">not_null</a> (<a href="seq.html#cons_82">cons</a> x s) -&gt; x &lt;&gt; <a href="#null_9">null</a>
+  <span class="keyword">lemma</span> <a name="not_null_cons2'lemma_346">not_null_cons2</a>:
+    <span class="keyword">forall</span> x: <a href="#loc_4">loc</a>, s: <a href="seq.html#seq_14">seq</a> <a href="#loc_4">loc</a>. <a href="#not_null_337">not_null</a> (<a href="seq.html#cons_82">cons</a> x s) -&gt; <a href="#not_null_337">not_null</a> s
+
+  <span class="keyword">let</span> <a name="append_cells_349">append_cells</a> (lcell: int -&gt; <a href="#loc_4">loc</a>) (lsz: int)
+                   (p: <a href="#loc_4">loc</a>)
+                   (rcell: int -&gt; <a href="#loc_4">loc</a>) (rsz: int) : int -&gt; <a href="#loc_4">loc</a>
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt; <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt;
+               i &lt;&gt; j -&gt; lcell i &lt;&gt; lcell j }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt; lcell i &lt;&gt; p }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt; <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt;
+               i &lt;&gt; j -&gt; rcell i &lt;&gt; rcell j }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt; rcell j &lt;&gt; p }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt;
+               <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> rsz -&gt; lcell i &lt;&gt; rcell j }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz -&gt; result i = lcell i }
+    <span class="keyword">ensures</span> { result lsz = p }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. lsz <a href="int.html#infix%20%3C_21">&lt;</a> i -&gt; result i = rcell (i <a href="int.html#infix%20-_23">-</a> lsz <a href="int.html#infix%20-_23">-</a> 1) }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rsz -&gt;
+              <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> lsz <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rsz -&gt;
+              i &lt;&gt; j -&gt; result i &lt;&gt; result j }
+  = (<span class="keyword">fun</span> i -&gt; <span class="keyword">if</span> i <a href="int.html#infix%20%3C_21">&lt;</a> lsz <span class="keyword">then</span> lcell i <span class="keyword">else</span>
+              <span class="keyword">if</span> i <a href="int.html#infix%20=_16">=</a> lsz <span class="keyword">then</span> p <span class="keyword">else</span>
+              rcell (i <a href="int.html#infix%20-_23">-</a> lsz <a href="int.html#infix%20-_23">-</a> 1))
+
+  <span class="keyword">let</span> <a name="append_fun_370">append_fun</a> (lf: int -&gt; int)
+                 (k: int) (v: int)
+                 (rf: int -&gt; int) : int -&gt; int
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; result i = lf i }
+    <span class="keyword">ensures</span> { result k = v }
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> i. k <a href="int.html#infix%20%3C_21">&lt;</a> i -&gt; result i = k <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rf (i <a href="int.html#infix%20-_23">-</a> k <a href="int.html#infix%20-_23">-</a> 1) }
+  = (<span class="keyword">fun</span> i -&gt; <span class="keyword">if</span> i <a href="int.html#infix%20%3C_21">&lt;</a> k <span class="keyword">then</span> lf i <span class="keyword">else</span>
+              <span class="keyword">if</span> i <a href="int.html#infix%20=_16">=</a> k <span class="keyword">then</span> v <span class="keyword">else</span>
+              k <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rf (i <a href="int.html#infix%20-_23">-</a> k <a href="int.html#infix%20-_23">-</a> 1))
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">ghost</span> <a name="shape_of_tree_380">shape_of_tree</a> (p: <a href="#loc_4">loc</a>) (t: <a href="bintree.html#tree_6">tree</a> <a href="#loc_4">loc</a>) : (ts: <a href="#tree_shape_55">tree_shape</a>, k: int)
+    <span class="keyword">requires</span> { <a href="#rooted_tree_317">rooted_tree</a> <a href="#mem_19">mem</a> p t }
+    <span class="keyword">requires</span> { <a href="seq.html#distinct_335">distinct</a> (<a href="#inorder_309">inorder</a> t) }
+    <span class="keyword">requires</span> { <a href="#not_null_337">not_null</a> (<a href="#inorder_309">inorder</a> t) }
+    <span class="keyword">variant</span>  { t }
+    <span class="comment">(* preconditions of `traversal` *)</span>
+    <span class="keyword">ensures</span>  { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> ts.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { 0 = ts.<a href="#size_61">size</a> -&gt; p = <a href="#null_9">null</a> }
+    <span class="keyword">ensures</span>  { 0 <a href="int.html#infix%20%3C_21">&lt;</a> ts.<a href="#size_61">size</a> -&gt; k <a href="int.html#infix%20%3C_21">&lt;</a> ts.<a href="#size_61">size</a> /\ ts.<a href="#cell_56">cell</a> k = p /\ ts.<a href="#clmd_57">clmd</a> k = 0 /\ ts.<a href="#crmd_60">crmd</a> k = ts.<a href="#size_61">size</a><a href="int.html#infix%20-_23">-</a>1 }
+    <span class="keyword">ensures</span>  { <a href="#wf_lst_82">wf_lst</a> ts <a href="#mem_19">mem</a> 0 ts.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <a href="#wf_rst_87">wf_rst</a> ts <a href="#mem_19">mem</a> 0 ts.<a href="#size_61">size</a> }
+    <span class="keyword">ensures</span>  { <a href="seq.html#create_42">create</a> ts.<a href="#size_61">size</a> ts.<a href="#cell_56">cell</a> <a href="seq.html#infix%20==_34">==</a> <a href="#inorder_309">inorder</a> t }
+  = <span class="keyword">match</span> t <span class="keyword">with</span>
+    | <a href="bintree.html#Empty_6">Empty</a> -&gt;
+        { <a href="#cell_56">cell</a> = (<span class="keyword">fun</span> _ -&gt; <a href="#null_9">null</a>);
+          <a href="#clmd_57">clmd</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#clst_58">clst</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#crst_59">crst</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#crmd_60">crmd</a> = (<span class="keyword">fun</span> _ -&gt; 0   );
+          <a href="#size_61">size</a> = 0 },
+        0
+    | <a href="bintree.html#Node_6">Node</a> l _ r -&gt;
+        <span class="keyword">let</span> lts, kl = shape_of_tree p.<a href="#lst_30">lst</a> l <span class="keyword">in</span>
+        <span class="keyword">let</span> k = lts.<a href="#size_61">size</a> <span class="keyword">in</span>
+        <span class="keyword">let</span> rts, kr = shape_of_tree p.<a href="#rst_39">rst</a> r <span class="keyword">in</span>
+        <span class="keyword">let</span> kr = <span class="keyword">if</span> rts.<a href="#size_61">size</a> <a href="int.html#infix%20=_16">=</a> 0 <span class="keyword">then</span> k <span class="keyword">else</span> k <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> kr <span class="keyword">in</span>
+        <span class="keyword">let</span> n = lts.<a href="#size_61">size</a> <a href="int.html#infix%20+_19">+</a> 1 <a href="int.html#infix%20+_19">+</a> rts.<a href="#size_61">size</a> <span class="keyword">in</span>
+        <span class="keyword">let</span> cells = <a href="#append_cells_349">append_cells</a> lts.<a href="#cell_56">cell</a> k p     rts.<a href="#cell_56">cell</a> rts.<a href="#size_61">size</a> <span class="keyword">in</span>
+        <span class="keyword">let</span> s = <a href="seq.html#create_42">create</a> n cells <span class="keyword">in</span>
+        <span class="keyword">assert</span> { p = s[k] };
+        { <a href="#cell_56">cell</a> = cells;
+          <a href="#clmd_57">clmd</a> = <a href="#append_fun_370">append_fun</a>   lts.<a href="#clmd_57">clmd</a> k 0     rts.<a href="#clmd_57">clmd</a>;
+          <a href="#clst_58">clst</a> = <a href="#append_fun_370">append_fun</a>   lts.<a href="#clst_58">clst</a> k kl    rts.<a href="#clst_58">clst</a>;
+          <a href="#crst_59">crst</a> = <a href="#append_fun_370">append_fun</a>   lts.<a href="#crst_59">crst</a> k kr    rts.<a href="#crst_59">crst</a>;
+          <a href="#crmd_60">crmd</a> = <a href="#append_fun_370">append_fun</a>   lts.<a href="#crmd_60">crmd</a> k (n<a href="int.html#infix%20-_23">-</a>1) rts.<a href="#crmd_60">crmd</a>;
+          <a href="#size_61">size</a> = n;
+        },
+        k
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <a name="morris_traversal_420">morris_traversal</a> (<span class="keyword">ghost</span> t: <a href="bintree.html#tree_6">tree</a> <a href="#loc_4">loc</a>) (p: <a href="#loc_4">loc</a>) : unit
+    <span class="keyword">requires</span> { <a href="#rooted_tree_317">rooted_tree</a> <a href="#mem_19">mem</a> p t }
+    <span class="keyword">requires</span> { <a href="seq.html#distinct_335">distinct</a> (<a href="#inorder_309">inorder</a> t) }
+    <span class="keyword">requires</span> { <a href="#not_null_337">not_null</a> (<a href="#inorder_309">inorder</a> t) }
+    <span class="keyword">requires</span> { <a href="#trace_131">trace</a>.<a href="seq.html#length_19">length</a> = 0 }
+    <span class="keyword">ensures</span>  { <a href="#trace_131">trace</a> <a href="seq.html#infix%20==_34">==</a> <a href="#inorder_309">inorder</a> t }
+  = <span class="keyword">let</span> ts, k = <a href="#shape_of_tree_380">shape_of_tree</a> p t <span class="keyword">in</span>
+    <a href="#traversal_180">traversal</a> ts k p
+
+<span class="keyword">end</span>
+</pre>
+
+</div>
+<hr>
+<p>Generated by why3doc 1.8.1+git</p>
+</body>
+</html>

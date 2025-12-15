@@ -17,7 +17,8 @@ void value_reverse(lst_t sp, lst_t qp) { tortoise_hare(NULL, sp, sp, qp); }
 
 // TODO: Add requirements
 void back_again(
-    // list_shape ls, int k,
+    //@ ghost list_shape ls,
+    //@ ghost int k,
     lst_t bp, lst_t sp, lst_t np) {
   if (bp == NULL || np == NULL)
     return;
@@ -29,7 +30,7 @@ void back_again(
   lst_t nbp = bp->cdr;
   bp->cdr = sp;
 
-  back_again(nbp, bp, np->cdr);
+  back_again(/*@ ghost ls, k-1, */ nbp, bp, np->cdr);
 }
 
 // TODO: add requirements

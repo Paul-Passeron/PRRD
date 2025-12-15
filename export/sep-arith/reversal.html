@@ -1,0 +1,391 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<link rel="stylesheet" href="style.css" type="text/css">
+<title>reversal.html</title>
+</head>
+<body>
+<div class="why3doc">
+<p>Companion file to the paper</p>
+<p>When Separation Arithmetic is Enough
+     Olivier Danvy, Jean-Christophe Filliâtre, Andrei Paskevich
+     iFM 2025
+</p>
+<pre><span class="keyword">module</span> <a name="Mlist_">Mlist</a>
+</pre>
+<div class="info"><p>Memory model for mutable lists</p>
+</div><pre>  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> map.<a href="map.html#Map_">Map</a>
+
+  <span class="keyword">type</span> <a name="lst_15">lst</a>
+
+  <span class="keyword">val</span> <a name="eq_lst_17">eq_lst</a> (l1 l2: <a href="#lst_15">lst</a>) : bool
+    <span class="keyword">ensures</span> { result &lt;-&gt; l1 = l2 }
+
+  <span class="keyword">val</span> <span class="keyword">constant</span> <a name="nil_20">nil</a> : <a href="#lst_15">lst</a>
+
+  <span class="keyword">type</span> <a name="elt_22">elt</a>
+
+  <span class="keyword">type</span> <a name="mem_24">mem</a> = {
+    <span class="keyword">mutable</span> <a name="mcar_25">mcar</a>: <a href="#lst_15">lst</a> -&gt; <a href="#elt_22">elt</a>;
+    <span class="keyword">mutable</span> <a name="mcdr_26">mcdr</a>: <a href="#lst_15">lst</a> -&gt; <a href="#lst_15">lst</a>;
+  }
+
+  <span class="keyword">val</span> <a name="mem_29">mem</a>: <a href="#mem_24">mem</a>
+
+  <span class="keyword">val</span> <a name="car_31">car</a> (p: <a href="#lst_15">lst</a>) : <a href="#elt_22">elt</a>
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#nil_20">nil</a> }
+    <span class="keyword">ensures</span>  { result = <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> p }
+
+  <span class="keyword">val</span> <a name="set_car_35">set_car</a> (p: <a href="#lst_15">lst</a>) (v: <a href="#elt_22">elt</a>) : unit
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#nil_20">nil</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> }
+    <span class="keyword">ensures</span>  { <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> = (<span class="keyword">old</span> <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a>)[p &lt;- v] }
+
+  <span class="keyword">val</span> <a name="cdr_40">cdr</a> (p: <a href="#lst_15">lst</a>) : <a href="#lst_15">lst</a>
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#nil_20">nil</a> }
+    <span class="keyword">ensures</span>  { result = <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> p }
+
+  <span class="keyword">val</span> <a name="set_cdr_44">set_cdr</a> (p: <a href="#lst_15">lst</a>) (v: <a href="#lst_15">lst</a>) : unit
+    <span class="keyword">requires</span> { p &lt;&gt; <a href="#nil_20">nil</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> }
+    <span class="keyword">ensures</span>  { <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> = (<span class="keyword">old</span> <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a>)[p &lt;- v] }
+
+  <span class="keyword">type</span> <a name="list_shape_49">list_shape</a> = {
+    <a name="cell_50">cell</a> : int -&gt; <a href="#lst_15">lst</a>;
+    <a name="size_51">size</a> : int;
+  }
+  <span class="keyword">invariant</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> size }
+  <span class="keyword">invariant</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a>  size -&gt; cell i &lt;&gt; <a href="#nil_20">nil</a> }
+  <span class="keyword">invariant</span> { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a>  size -&gt;
+              <span class="keyword">forall</span> j. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C=_25">&lt;=</a> size -&gt; i &lt;&gt; j -&gt; cell i &lt;&gt; cell j }
+
+  <span class="comment">(* A linked-list with `size` cells:
+
+             0           1                size-1       size
+         +---+---+   +---+---+           +---+---+
+     cell|   | o----&gt;|   | o----&gt; ... --&gt;|   | o----&gt;   q
+         +---+---+   +---+---+           +---+---+
+
+     The last cell (at position `size-1`) has a `cdr` field
+     with value `cell[size]`, which may or may not be `nil`.
+
+     This way, we can accomodate a nil-terminated list or list
+     segments with the same definitions.
+  *)</span>
+
+  <span class="comment">(* left-to-right list from `lo` inclusive to `hi` inclusive *)</span>
+  <span class="keyword">predicate</span> <a name="listLR_73">listLR</a> (ls: <a href="#list_shape_49">list_shape</a>) (m: <a href="#mem_24">mem</a>) (p: <a href="#lst_15">lst</a>) (lo hi: int) (q: <a href="#lst_15">lst</a>) =
+    0 <a href="int.html#infix%20%3C=_25">&lt;=</a> lo <a href="int.html#infix%20%3C=_25">&lt;=</a> hi <a href="int.html#infix%20%3C=_25">&lt;=</a> ls.<a href="#size_51">size</a> /\ p = ls.<a href="#cell_50">cell</a> lo /\ q = ls.<a href="#cell_50">cell</a> hi /\
+    <span class="keyword">forall</span> i. lo <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> hi -&gt; m.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> i) = ls.<a href="#cell_50">cell</a> (i<a href="int.html#infix%20+_19">+</a>1)
+
+  <span class="comment">(* right-to-left list from `k` excluded to `0` inclusive *)</span>
+  <span class="keyword">predicate</span> <a name="listRL_78">listRL</a> (ls: <a href="#list_shape_49">list_shape</a>) (m: <a href="#mem_24">mem</a>) (p: <a href="#lst_15">lst</a>) (k: int) =
+    (k = 0 /\ p = <a href="#nil_20">nil</a>) \/
+    (0 <a href="int.html#infix%20%3C_21">&lt;</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> ls.<a href="#size_51">size</a> /\ p = ls.<a href="#cell_50">cell</a> (k<a href="int.html#infix%20-_23">-</a>1) /\ m.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> 0) = <a href="#nil_20">nil</a> /\
+      <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C_21">&lt;</a> i <a href="int.html#infix%20%3C_21">&lt;</a> k -&gt; m.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> i) = ls.<a href="#cell_50">cell</a> (i<a href="int.html#infix%20-_23">-</a>1))
+
+  <span class="keyword">predicate</span> <a name="frame_83">frame</a> (ls: <a href="#list_shape_49">list_shape</a>) (m1 m2: <a href="#mem_24">mem</a>) =
+    <span class="keyword">forall</span> p. (<span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> -&gt; p &lt;&gt; ls.<a href="#cell_50">cell</a> i) -&gt;
+      m1.<a href="#mcar_25">mcar</a> p = m2.<a href="#mcar_25">mcar</a> p &amp;&amp; m1.<a href="#mcdr_26">mcdr</a> p = m2.<a href="#mcdr_26">mcdr</a> p
+
+<span class="keyword">end</span>
+
+<span class="keyword">module</span> <a name="ListReversal_">ListReversal</a>
+</pre>
+<div class="info"><p>traditional list reversal, as a warmup</p>
+</div><pre>  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> <a href="#Mlist_">Mlist</a>
+
+  <span class="comment">(* with a while loop *)</span>
+  <span class="keyword">let</span> <a name="list_reversal_loop_96">list_reversal_loop</a> (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>) (p: <a href="#lst_15">lst</a>) : (r: <a href="#lst_15">lst</a>)
+    <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> p 0 ls.<a href="#size_51">size</a> <a href="#nil_20">nil</a> }
+    <span class="keyword">writes</span>   { <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> }
+    <span class="keyword">ensures</span>  { <a href="#listRL_78">listRL</a> ls <a href="#mem_29">mem</a> r   ls.<a href="#size_51">size</a>     }
+    <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+  = <span class="keyword">let</span> ref l = p <span class="keyword">in</span>
+    <span class="keyword">let</span> <span class="keyword">ghost</span> ref i = 0 <span class="keyword">in</span>
+    <span class="keyword">let</span> ref r = <a href="#nil_20">nil</a> <span class="keyword">in</span>
+    <span class="keyword">while</span> <span class="keyword">not</span> <a href="#eq_lst_17">eq_lst</a> l <a href="#nil_20">nil</a> <span class="keyword">do</span>
+      <span class="keyword">invariant</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> l i ls.<a href="#size_51">size</a> <a href="#nil_20">nil</a> }
+      <span class="keyword">invariant</span> { <a href="#listRL_78">listRL</a> ls <a href="#mem_29">mem</a> r i             }
+      <span class="keyword">invariant</span> { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+      <span class="keyword">variant</span>   { ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> i }
+      <span class="keyword">let</span> tmp = l <span class="keyword">in</span>
+      l &lt;- <a href="#cdr_40">cdr</a> l;
+      <span class="keyword">ghost</span> (i &lt;- i <a href="int.html#infix%20+_19">+</a> 1);
+      <a href="#set_cdr_44">set_cdr</a> tmp r;
+      r &lt;- tmp
+    <span class="keyword">done</span>;
+    <span class="keyword">return</span> r
+
+  <span class="comment">(* with a recursive function *)</span>
+  <span class="keyword">let</span> <span class="keyword">rec</span> <a name="aux_118">aux</a> (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>) (<span class="keyword">ghost</span> i) (r: <a href="#lst_15">lst</a>) (l: <a href="#lst_15">lst</a>) : <a href="#lst_15">lst</a>
+    <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> l i ls.<a href="#size_51">size</a> <a href="#nil_20">nil</a> }
+    <span class="keyword">requires</span> { <a href="#listRL_78">listRL</a> ls <a href="#mem_29">mem</a> r i             }
+    <span class="keyword">writes</span>   { <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> }
+    <span class="keyword">ensures</span>  { <a href="#listRL_78">listRL</a> ls <a href="#mem_29">mem</a> result ls.<a href="#size_51">size</a>  }
+    <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+    <span class="keyword">variant</span>  { ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> i }
+  = <span class="keyword">if</span> <a href="#eq_lst_17">eq_lst</a> l <a href="#nil_20">nil</a> <span class="keyword">then</span> r <span class="keyword">else</span> <span class="keyword">let</span> n = <a href="#cdr_40">cdr</a> l <span class="keyword">in</span> <a href="#set_cdr_44">set_cdr</a> l r; aux ls (i<a href="int.html#infix%20+_19">+</a>1) l n
+
+  <span class="keyword">predicate</span> <a name="is_list_127">is_list</a> (mem: <a href="#mem_24">mem</a>) (p: <a href="#lst_15">lst</a>) (ls: <a href="#list_shape_49">list_shape</a>) =
+    <a href="#listLR_73">listLR</a> ls mem p 0 ls.<a href="#size_51">size</a> <a href="#nil_20">nil</a>
+
+  <span class="keyword">function</span> <a name="reverse_130">reverse</a> (size: int) (m: int -&gt; &#39;a) : int -&gt; &#39;a =
+    <span class="keyword">fun</span> i -&gt; m (<span class="keyword">if</span> 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> size <span class="keyword">then</span> size<a href="int.html#infix%20-_23">-</a>1<a href="int.html#infix%20-_23">-</a>i <span class="keyword">else</span> i)
+
+  <span class="keyword">let</span> <span class="keyword">ghost</span> <span class="keyword">function</span> <a name="reverse_shape_133">reverse_shape</a> (ls: <a href="#list_shape_49">list_shape</a>) : <a href="#list_shape_49">list_shape</a> =
+    { ls <span class="keyword">with</span> <a href="#cell_50">cell</a> = <a href="#reverse_130">reverse</a> ls.<a href="#size_51">size</a> ls.<a href="#cell_50">cell</a> }
+
+  <span class="keyword">let</span> <a name="list_reversal_136">list_reversal</a> (p: <a href="#lst_15">lst</a>) (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>) : (r: <a href="#lst_15">lst</a>)
+    <span class="keyword">requires</span> { <a href="#is_list_127">is_list</a> <a href="#mem_29">mem</a> p ls }
+    <span class="keyword">writes</span>   { <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> }
+    <span class="keyword">ensures</span>  { <a href="#is_list_127">is_list</a> <a href="#mem_29">mem</a> r (<a href="#reverse_shape_133">reverse_shape</a> ls) }
+    <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+  = <a href="#aux_118">aux</a> (<span class="keyword">ghost</span> ls) (<span class="keyword">ghost</span> 0) <a href="#nil_20">nil</a> p
+
+<span class="keyword">end</span>
+
+<span class="keyword">module</span> <a name="ListSpec_">ListSpec</a>
+</pre>
+<div class="info"><p>traditional specification using logical algebraic lists</p>
+</div><pre>  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> <a href="#Mlist_">Mlist</a>
+  <span class="keyword">use</span> list.<a href="list.html#List_">List</a>
+  <span class="keyword">use</span> list.<a href="list.html#Length_">Length</a>
+
+  <span class="keyword">function</span> <a name="footprint_153">footprint</a> (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>) : <a href="#lst_15">lst</a> -&gt; bool
+  = <span class="keyword">match</span> l <span class="keyword">with</span>
+    | <a href="list.html#Nil_8">Nil</a>      -&gt;
+        (<span class="keyword">fun</span> _ -&gt; <span class="keyword">false</span>)
+    | <a href="list.html#Cons_8">Cons</a> h t -&gt;
+        <span class="keyword">let</span> ft = <a href="#footprint_153">footprint</a> t <span class="keyword">in</span>
+        (<span class="keyword">fun</span> p -&gt; p = h || ft p)
+    <span class="keyword">end</span>
+
+  <span class="keyword">predicate</span> <a name="linked_list_162">linked_list</a> (mem: <a href="#mem_24">mem</a>) (p: <a href="#lst_15">lst</a>) (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>) (q: <a href="#lst_15">lst</a>)
+  = <span class="keyword">match</span> l <span class="keyword">with</span>
+    | <a href="list.html#Nil_8">Nil</a> -&gt;
+        p = q
+    | <a href="list.html#Cons_8">Cons</a> h t -&gt;
+        p &lt;&gt; <a href="#nil_20">nil</a> /\
+        p = h /\
+        <span class="keyword">not</span> (<a href="#footprint_153">footprint</a> t p) /\
+        p &lt;&gt; q /\
+        <a href="#linked_list_162">linked_list</a> mem (mem.<a href="#mcdr_26">mcdr</a> p) t q
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">ghost</span> <a name="shape_of_list_174">shape_of_list</a> (p: <a href="#lst_15">lst</a>) (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>) (q: <a href="#lst_15">lst</a>) : (ls: <a href="#list_shape_49">list_shape</a>)
+    <span class="keyword">requires</span> { <a href="#linked_list_162">linked_list</a> <a href="#mem_29">mem</a> p l q }
+    <span class="keyword">variant</span>  { l }
+    <span class="keyword">ensures</span>  { ls.<a href="#size_51">size</a> = <a href="list.html#length_24">length</a> l }
+    <span class="keyword">ensures</span>  { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> p 0 ls.<a href="#size_51">size</a> q }
+    <span class="keyword">ensures</span>  { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> l x &lt;-&gt;
+                 <span class="keyword">exists</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> /\ x = ls.<a href="#cell_50">cell</a> i }
+  = <span class="keyword">match</span> l <span class="keyword">with</span>
+    | <a href="list.html#Nil_8">Nil</a> -&gt;
+        { <a href="#cell_50">cell</a> = (<span class="keyword">fun</span> _ -&gt; p); <a href="#size_51">size</a> = 0; }
+    | <a href="list.html#Cons_8">Cons</a> _ t -&gt;
+        <span class="keyword">let</span> n = <a href="#cdr_40">cdr</a> p <span class="keyword">in</span>
+        <span class="keyword">let</span> ls = shape_of_list n t q <span class="keyword">in</span>
+        { <a href="#cell_50">cell</a> = (<span class="keyword">fun</span> i -&gt; <span class="keyword">if</span> i <a href="int.html#infix%20=_16">=</a> 0 <span class="keyword">then</span> p <span class="keyword">else</span> ls.<a href="#cell_50">cell</a> (i <a href="int.html#infix%20-_23">-</a> 1));
+          <a href="#size_51">size</a> = ls.<a href="#size_51">size</a> <a href="int.html#infix%20+_19">+</a> 1 }
+    <span class="keyword">end</span>
+
+  <span class="keyword">predicate</span> <a name="list_frame_191">list_frame</a> (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>) (m1 m2: <a href="#mem_24">mem</a>) =
+    <span class="keyword">forall</span> p. <span class="keyword">not</span> <a href="#footprint_153">footprint</a> l p -&gt;
+      m1.<a href="#mcar_25">mcar</a> p = m2.<a href="#mcar_25">mcar</a> p &amp;&amp; m1.<a href="#mcdr_26">mcdr</a> p = m2.<a href="#mcdr_26">mcdr</a> p
+
+  <span class="keyword">use</span> list.<a href="list.html#Length_">Length</a>
+  <span class="keyword">use</span> list.<a href="list.html#Reverse_">Reverse</a>
+  <span class="keyword">use</span> list.<a href="list.html#Append_">Append</a>
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">lemma</span> <a name="footprint_append_199">footprint_append</a> (l1 l2: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>)
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> (l1<a href="list.html#infix%20++_202">++</a>l2) x
+                &lt;-&gt; (<a href="#footprint_153">footprint</a> l1 x || <a href="#footprint_153">footprint</a> l2 x) }
+    <span class="keyword">variant</span> { l1 }
+  = <span class="keyword">match</span> l1 <span class="keyword">with</span>
+    | <a href="list.html#Nil_8">Nil</a>       -&gt; ()
+    | <a href="list.html#Cons_8">Cons</a> _ t1 -&gt; footprint_append t1 l2
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">lemma</span> <a name="footprint_reverse_208">footprint_reverse</a> (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>)
+    <span class="keyword">ensures</span> { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> l x &lt;-&gt; <a href="#footprint_153">footprint</a> (<a href="list.html#reverse_257">reverse</a> l) x }
+    <span class="keyword">variant</span> { l }
+  = <span class="keyword">match</span> l <span class="keyword">with</span>
+    | <a href="list.html#Nil_8">Nil</a>      -&gt; ()
+    | <a href="list.html#Cons_8">Cons</a> _ t -&gt; footprint_reverse t
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <span class="keyword">rec</span> <span class="keyword">lemma</span> <a name="linked_list_append_216">linked_list_append</a> (mem: <a href="#mem_24">mem</a>) (p q r: <a href="#lst_15">lst</a>) (l1 l2: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>)
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> l1 x -&gt; x &lt;&gt; r }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> l1 x -&gt; <a href="#footprint_153">footprint</a> l2 x -&gt; <span class="keyword">false</span> }
+    <span class="keyword">requires</span> { <a href="#linked_list_162">linked_list</a> mem p l1         q }
+    <span class="keyword">requires</span> { <a href="#linked_list_162">linked_list</a> mem q l2         r }
+    <span class="keyword">variant</span>  { l1 }
+    <span class="keyword">ensures</span>  { <a href="#linked_list_162">linked_list</a> mem p (l1 <a href="list.html#infix%20++_202">++</a> l2) r }
+  = <span class="keyword">match</span> l1 <span class="keyword">with</span>
+    | <a href="list.html#Nil_8">Nil</a>       -&gt; ()
+    | <a href="list.html#Cons_8">Cons</a> _ t1 -&gt; linked_list_append mem (mem.<a href="#mcdr_26">mcdr</a> p) q r t1 l2
+    <span class="keyword">end</span>
+
+  <span class="keyword">let</span> <span class="keyword">lemma</span> <a name="reverse_list_of_shape_228">reverse_list_of_shape</a> (mem1 mem2: <a href="#mem_24">mem</a>)
+    (ls: <a href="#list_shape_49">list_shape</a>) (p r: <a href="#lst_15">lst</a>) (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>)
+    <span class="keyword">requires</span> { ls.<a href="#size_51">size</a> = <a href="list.html#length_24">length</a> l }
+    <span class="keyword">requires</span> { <a href="#linked_list_162">linked_list</a> mem1 p l <a href="#nil_20">nil</a> }
+    <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls mem1 p 0 ls.<a href="#size_51">size</a> <a href="#nil_20">nil</a> }
+    <span class="keyword">requires</span> { <a href="#listRL_78">listRL</a> ls mem2 r   ls.<a href="#size_51">size</a>     }
+    <span class="keyword">requires</span> { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> l x &lt;-&gt;
+                 <span class="keyword">exists</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> /\ x = ls.<a href="#cell_50">cell</a> i }
+    <span class="keyword">ensures</span>  { <a href="#linked_list_162">linked_list</a> mem2 r (<a href="list.html#reverse_257">reverse</a> l) <a href="#nil_20">nil</a> }
+  = <span class="keyword">let</span> <span class="keyword">rec</span> rev (i: int) (l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>) : unit
+      <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C=_25">&lt;=</a> ls.<a href="#size_51">size</a> } <span class="keyword">requires</span> { ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> i = <a href="list.html#length_24">length</a> l }
+      <span class="keyword">requires</span> { <a href="#linked_list_162">linked_list</a> mem1 (ls.<a href="#cell_50">cell</a> i) l <a href="#nil_20">nil</a> }
+      <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls mem1 (ls.<a href="#cell_50">cell</a> i) i ls.<a href="#size_51">size</a> <a href="#nil_20">nil</a> }
+      <span class="keyword">variant</span>  { l }
+      <span class="keyword">ensures</span>  { <a href="#linked_list_162">linked_list</a> mem2 r (<a href="list.html#reverse_257">reverse</a> l)
+                   (<span class="keyword">if</span> i = 0 <span class="keyword">then</span> <a href="#nil_20">nil</a> <span class="keyword">else</span> ls.<a href="#cell_50">cell</a> (i<a href="int.html#infix%20-_23">-</a>1)) }
+      <span class="keyword">ensures</span>  { <span class="keyword">forall</span> x. <a href="#footprint_153">footprint</a> (<a href="list.html#reverse_257">reverse</a> l) x &lt;-&gt;
+                   <span class="keyword">exists</span> j. i <a href="int.html#infix%20%3C=_25">&lt;=</a> j <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> /\ x = ls.<a href="#cell_50">cell</a> j }
+    = <span class="keyword">match</span> l <span class="keyword">with</span>
+      | <a href="list.html#Nil_8">Nil</a> -&gt; ()
+      | <a href="list.html#Cons_8">Cons</a> x t -&gt;
+          <span class="keyword">assert</span> { x = ls.<a href="#cell_50">cell</a> i };
+          <span class="keyword">assert</span> { <a href="#linked_list_162">linked_list</a> mem2 x (<a href="list.html#Cons_8">Cons</a> x <a href="list.html#Nil_8">Nil</a>)
+                     (<span class="keyword">if</span> i = 0 <span class="keyword">then</span> <a href="#nil_20">nil</a> <span class="keyword">else</span> ls.<a href="#cell_50">cell</a> (i<a href="int.html#infix%20-_23">-</a>1)) };
+          rev (i<a href="int.html#infix%20+_19">+</a>1) t;
+          <a href="#linked_list_append_216">linked_list_append</a> mem2 r x (<span class="keyword">if</span> i <a href="int.html#infix%20=_16">=</a> 0 <span class="keyword">then</span> <a href="#nil_20">nil</a> <span class="keyword">else</span> ls.<a href="#cell_50">cell</a> (i<a href="int.html#infix%20-_23">-</a>1))
+            (<a href="list.html#reverse_257">reverse</a> t) (<a href="list.html#Cons_8">Cons</a> x <a href="list.html#Nil_8">Nil</a>)
+      <span class="keyword">end</span>
+    <span class="keyword">in</span>
+    rev 0 l
+
+  <span class="keyword">use</span> <a href="#ListReversal_">ListReversal</a> <span class="keyword">as</span> LR
+
+  <span class="keyword">let</span> <a name="list_reversal_good_spec_261">list_reversal_good_spec</a> (<span class="keyword">ghost</span> l: <a href="list.html#list_8">list</a> <a href="#lst_15">lst</a>) (p: <a href="#lst_15">lst</a>) : (r: <a href="#lst_15">lst</a>)
+    <span class="keyword">requires</span> { <a href="#linked_list_162">linked_list</a> <a href="#mem_29">mem</a> p l           <a href="#nil_20">nil</a> }
+    <span class="keyword">ensures</span>  { <a href="#linked_list_162">linked_list</a> <a href="#mem_29">mem</a> r (<a href="list.html#reverse_257">reverse</a> l) <a href="#nil_20">nil</a> }
+    <span class="keyword">ensures</span>  { <a href="#list_frame_191">list_frame</a> l <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+  = <span class="keyword">let</span> mem0 = <span class="keyword">pure</span> {<a href="#mem_29">mem</a>} <span class="keyword">in</span>
+    <span class="keyword">let</span> <span class="keyword">ghost</span> ls = <a href="#shape_of_list_174">shape_of_list</a> p l <a href="#nil_20">nil</a> <span class="keyword">in</span>
+    <span class="keyword">let</span> r = LR.<a href="#aux_118">aux</a> (<span class="keyword">ghost</span> ls) (<span class="keyword">ghost</span> 0) <a href="#nil_20">nil</a> p <span class="keyword">in</span>
+    <a href="#reverse_list_of_shape_228">reverse_list_of_shape</a> mem0 <a href="#mem_29">mem</a> ls p r l;
+    r
+
+<span class="keyword">end</span>
+
+<span class="keyword">module</span> <a name="ValueReversal_">ValueReversal</a>
+</pre>
+<div class="info"><p>Reversing values in a singly linked list</p>
+</div><pre>  <span class="keyword">use</span> int.<a href="int.html#Int_">Int</a>
+  <span class="keyword">use</span> <a href="#Mlist_">Mlist</a>
+
+  <span class="keyword">predicate</span> <a name="reversal_280">reversal</a> (ls: <a href="#list_shape_49">list_shape</a>) (m1 m2: <a href="#mem_24">mem</a>) (k: int) =
+    <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> -&gt;
+      (i <a href="int.html#infix%20%3C_21">&lt;</a> k \/ ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> i -&gt;
+        m1.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> i) = m2.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> i)) /\
+      (k <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k -&gt;
+        m1.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> i) = m2.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> (ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> 1 <a href="int.html#infix%20-_23">-</a> i)))
+</pre>
+<div class="info"><p>the contents of the <code>car</code> fields in ls[k..size-k[ have been swapped</p>
+</div><pre>  <span class="keyword">scope</span> LinearSpace
+
+    <span class="keyword">let</span> <span class="keyword">rec</span> <a name="tortoise_hare_and_back_again_289">tortoise_hare_and_back_again</a>
+      (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>) (<span class="keyword">ghost</span> k: int) (sp fp qp: <a href="#lst_15">lst</a>) : <a href="#lst_15">lst</a>
+      <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp k ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">requires</span> { 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> k <a href="int.html#infix%20%3C=_25">&lt;=</a> 2<a href="int.html#infix%20*_20">*</a>k <a href="int.html#infix%20%3C=_25">&lt;=</a> ls.<a href="#size_51">size</a>      }
+      <span class="keyword">requires</span> { ls.<a href="#cell_50">cell</a> (2<a href="int.html#infix%20*_20">*</a>k) = fp }
+      <span class="keyword">variant</span>  { ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k }
+      <span class="keyword">ensures</span>  { ls.<a href="#cell_50">cell</a> (ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k) = result }
+      <span class="keyword">ensures</span>  { <a href="#reversal_280">reversal</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) k }
+      <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+    =
+      <span class="keyword">if</span> <a href="#eq_lst_17">eq_lst</a> fp qp <span class="keyword">then</span>
+        sp
+      <span class="keyword">else</span> <span class="keyword">if</span> <a href="#eq_lst_17">eq_lst</a> fp.<a href="#cdr_40">cdr</a> qp <span class="keyword">then</span>
+        sp.<a href="#cdr_40">cdr</a>
+      <span class="keyword">else</span> <span class="keyword">begin</span>
+        <span class="keyword">let</span> np = tortoise_hare_and_back_again ls (k<a href="int.html#infix%20+_19">+</a>1) sp.<a href="#cdr_40">cdr</a> fp.<a href="#cdr_40">cdr</a>.<a href="#cdr_40">cdr</a> qp <span class="keyword">in</span>
+        <span class="keyword">let</span> tmp = sp.<a href="#car_31">car</a> <span class="keyword">in</span> <a href="#set_car_35">set_car</a> sp np.<a href="#car_31">car</a>; <a href="#set_car_35">set_car</a> np tmp;
+        np.<a href="#cdr_40">cdr</a>
+      <span class="keyword">end</span>
+
+    <span class="keyword">let</span> <a name="value_reverse_309">value_reverse</a> (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>) (sp qp: <a href="#lst_15">lst</a>) : unit
+      <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp 0 ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">writes</span>   { <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> }
+      <span class="keyword">ensures</span>  { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp 0 ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">ensures</span>  { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> -&gt;
+                 <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> i) = <span class="keyword">old</span> <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> (ls.<a href="#size_51">size</a><a href="int.html#infix%20-_23">-</a>1<a href="int.html#infix%20-_23">-</a>i)) /\
+                 <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> i) = <span class="keyword">old</span> <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> i) }
+      <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+    =
+      <span class="keyword">let</span> _ = <a href="#tortoise_hare_and_back_again_289">tortoise_hare_and_back_again</a> ls 0 sp sp qp <span class="keyword">in</span> ()
+
+  <span class="keyword">end</span>
+
+  <span class="keyword">scope</span> ConstantSpace
+
+    <span class="keyword">let</span> <span class="keyword">rec</span> <a name="back_again_324">back_again</a> (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>)
+      (<span class="keyword">ghost</span> omem: {<a href="#mem_24">mem</a>}) (<span class="keyword">ghost</span> k: int) (bp sp np: <a href="#lst_15">lst</a>) : unit
+      <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp k ls.<a href="#size_51">size</a> (ls.<a href="#cell_50">cell</a> ls.<a href="#size_51">size</a>) }
+      <span class="keyword">requires</span> { <a href="#listRL_78">listRL</a> ls <a href="#mem_29">mem</a> bp k }
+      <span class="keyword">requires</span> { k <a href="int.html#infix%20%3C=_25">&lt;=</a> ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k }
+      <span class="keyword">requires</span> { ls.<a href="#cell_50">cell</a> (ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k) = np }
+      <span class="keyword">requires</span> { <a href="#reversal_280">reversal</a> ls <a href="#mem_29">mem</a> omem k }
+      <span class="keyword">variant</span>  { k }
+      <span class="keyword">ensures</span>  { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> (ls.<a href="#cell_50">cell</a> 0) 0 ls.<a href="#size_51">size</a> (ls.<a href="#cell_50">cell</a> ls.<a href="#size_51">size</a>) }
+      <span class="keyword">ensures</span>  { <a href="#reversal_280">reversal</a> ls <a href="#mem_29">mem</a> omem 0 }
+      <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+    =
+      <span class="keyword">if</span> <span class="keyword">not</span> <a href="#eq_lst_17">eq_lst</a> bp <a href="#nil_20">nil</a> <span class="keyword">then</span> <span class="keyword">begin</span>
+        <span class="keyword">let</span> tmp = bp.<a href="#car_31">car</a> <span class="keyword">in</span> <a href="#set_car_35">set_car</a> bp np.<a href="#car_31">car</a>; <a href="#set_car_35">set_car</a> np tmp;
+        <span class="keyword">let</span> nbp = bp.<a href="#cdr_40">cdr</a> <span class="keyword">in</span> <a href="#set_cdr_44">set_cdr</a> bp sp;
+        back_again ls omem (k<a href="int.html#infix%20-_23">-</a>1) nbp bp np.<a href="#cdr_40">cdr</a>
+      <span class="keyword">end</span>
+
+    <span class="keyword">let</span> <span class="keyword">rec</span> <a name="tortoise_hare_342">tortoise_hare</a> (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>)
+      (<span class="keyword">ghost</span> k: int) (bp sp fp qp: <a href="#lst_15">lst</a>) : unit
+      <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp k ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">requires</span> { <a href="#listRL_78">listRL</a> ls <a href="#mem_29">mem</a> bp k }
+      <span class="keyword">requires</span> { 2<a href="int.html#infix%20*_20">*</a>k <a href="int.html#infix%20%3C=_25">&lt;=</a> ls.<a href="#size_51">size</a> }
+      <span class="keyword">requires</span> { ls.<a href="#cell_50">cell</a> (2<a href="int.html#infix%20*_20">*</a>k) = fp }
+      <span class="keyword">variant</span>  { ls.<a href="#size_51">size</a> <a href="int.html#infix%20-_23">-</a> k }
+      <span class="keyword">ensures</span>  { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> (ls.<a href="#cell_50">cell</a> 0) 0 ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">ensures</span>  { <a href="#reversal_280">reversal</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) 0 }
+      <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+    =
+      <span class="keyword">if</span> <a href="#eq_lst_17">eq_lst</a> fp qp <span class="keyword">then</span>
+        <a href="#back_again_324">back_again</a> ls (<span class="keyword">pure</span> {<a href="#mem_29">mem</a>}) k bp sp sp
+      <span class="keyword">else</span> <span class="keyword">if</span> <a href="#eq_lst_17">eq_lst</a> fp.<a href="#cdr_40">cdr</a> qp <span class="keyword">then</span>
+        <a href="#back_again_324">back_again</a> ls (<span class="keyword">pure</span> {<a href="#mem_29">mem</a>}) k bp sp sp.<a href="#cdr_40">cdr</a>
+      <span class="keyword">else</span> <span class="keyword">begin</span>
+        <span class="keyword">let</span> nfp = fp.<a href="#cdr_40">cdr</a>.<a href="#cdr_40">cdr</a> <span class="keyword">in</span>
+        <span class="keyword">let</span> nsp = sp.<a href="#cdr_40">cdr</a> <span class="keyword">in</span> <a href="#set_cdr_44">set_cdr</a> sp bp;
+        tortoise_hare ls (k<a href="int.html#infix%20+_19">+</a>1) sp nsp nfp qp
+      <span class="keyword">end</span>
+
+    <span class="keyword">let</span> <a name="value_reverse_363">value_reverse</a> (<span class="keyword">ghost</span> ls: <a href="#list_shape_49">list_shape</a>) (sp qp: <a href="#lst_15">lst</a>) : unit
+      <span class="keyword">requires</span> { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp 0 ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">writes</span>   { <a href="#mem_29">mem</a> }
+      <span class="keyword">ensures</span>  { <a href="#listLR_73">listLR</a> ls <a href="#mem_29">mem</a> sp 0 ls.<a href="#size_51">size</a> qp }
+      <span class="keyword">ensures</span>  { <span class="keyword">forall</span> i. 0 <a href="int.html#infix%20%3C=_25">&lt;=</a> i <a href="int.html#infix%20%3C_21">&lt;</a> ls.<a href="#size_51">size</a> -&gt;
+                 <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> i) = <span class="keyword">old</span> <a href="#mem_29">mem</a>.<a href="#mcar_25">mcar</a> (ls.<a href="#cell_50">cell</a> (ls.<a href="#size_51">size</a><a href="int.html#infix%20-_23">-</a>1<a href="int.html#infix%20-_23">-</a>i)) /\
+                 <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> i) = <span class="keyword">old</span> <a href="#mem_29">mem</a>.<a href="#mcdr_26">mcdr</a> (ls.<a href="#cell_50">cell</a> i) }
+      <span class="keyword">ensures</span>  { <a href="#frame_83">frame</a> ls <a href="#mem_29">mem</a> (<span class="keyword">old</span> <a href="#mem_29">mem</a>) }
+    =
+      <a href="#tortoise_hare_342">tortoise_hare</a> ls 0 <a href="#nil_20">nil</a> sp sp qp
+
+  <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+</pre>
+
+</div>
+<hr>
+<p>Generated by why3doc 1.8.1+git</p>
+</body>
+</html>
