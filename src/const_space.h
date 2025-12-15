@@ -1,9 +1,7 @@
-#ifndef LIST_SHAPE_H
-#define LIST_SHAPE_H
-#include "lst.h"
+#ifndef CONST_SPACE_H
+#define CONST_SPACE_H
 #include "common.h"
-
-
+#include "lst.h"
 
 void back_again(lst_t bp, lst_t sp, lst_t np);
 void tortoise_hare(
@@ -11,15 +9,20 @@ void tortoise_hare(
     lst_t bp, lst_t sp, lst_t fp, lst_t qp);
 void value_reverse(lst_t sp, lst_t qp);
 
-#ifdef LIST_SHAPE_IMPL
+#ifdef CONST_SPACE_IMPL
 
-void value_reverse(lst_t sp, lst_t qp) { tortoise_hare(NULL, sp, sp, qp); }
+//@ ghost int tortoise_hare_k;
+//@ ghost list_shape tortoise_hare_ls;
+//@ ghost int back_again_k;
+//@ ghost list_shape back_again_ls;
+//@ ghost list_shape value_reverse_ls;
+void value_reverse(lst_t sp, lst_t qp) {
+    //@ ghost tortoise_hare_ls = value_reverse_ls;
+    tortoise_hare(NULL, sp, sp, qp); }
 
-// TODO: Add requirements
-void back_again(
-    //@ ghost list_shape ls,
-    //@ ghost int k,
-    lst_t bp, lst_t sp, lst_t np) {
+
+
+void back_again(lst_t bp, lst_t sp, lst_t np) {
   if (bp == NULL || np == NULL)
     return;
 
@@ -30,25 +33,28 @@ void back_again(
   lst_t nbp = bp->cdr;
   bp->cdr = sp;
 
-  back_again(/*@ ghost ls, k-1, */ nbp, bp, np->cdr);
+  //@ ghost back_again_k = back_again_k + 1;
+  back_again(nbp, bp, np->cdr);
 }
 
-// TODO: add requirements
-void tortoise_hare(
-    // list_shape ls, int k,
-    lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
+void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
   lst_t nfp;
   if (fp == qp) {
-    back_again(/*ls, k, */ bp, sp, sp);
+    //@ghost back_again_k = tortoise_hare_k;
+    //@ghost back_again_ls = tortoise_hare_ls;
+    back_again(bp, sp, sp);
   } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
-    back_again(/*ls, k,*/ bp, sp, sp->cdr);
+    //@ghost back_again_k = tortoise_hare_k;
+    //@ghost back_again_ls = tortoise_hare_ls;
+    back_again(bp, sp, sp->cdr);
   } else {
     nfp = fp->cdr->cdr;
     lst_t nsp = sp->cdr;
     sp->cdr = bp;
-    tortoise_hare(/*ls, k + 1, */ sp, nsp, nfp, qp);
+    //@ghost tortoise_hare_k = tortoise_hare_k + 1;
+    tortoise_hare(sp, nsp, nfp, qp);
   }
 }
 
-#endif // LIST_SHAPE_IMPL
-#endif // LIST_SHAPE_H
+#endif // CONST_SPACE_IMPL
+#endif // CONST_SPACE_H
