@@ -35,10 +35,20 @@ void morris(tree_t t);
 //@ ghost int morris_r;
 //@ ghost int morris_c;
 //@ ghost int morris_k;
-//@ ghost int  warp_j;
+//@ ghost int warp_j;
 
 
 bool warp(tree_t p, tree_t q) {
+    requires { 0 <= j < k }
+    requires { q = t.cell j }
+    requires { t.crmd j = k-1 }
+    requires { c < k -> wf_rst t mem 0 k }
+    requires { c = k -> wf_rst t mem 0 (k-1) /\
+                        mem.mrst (t.cell (k-1)) = p }
+    //@ requires 0 <= warp_j < morris_k;
+    //@ requires q = morris_t.cell[warp_j]
+    //@ requires morris_t.rmdt[warp_j] = morris_j - 1
+    //@ requires morris_c < morris_k => 
     if (q->right == NULL) {
         q->right = p;
         return true;
