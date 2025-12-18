@@ -39,16 +39,11 @@ void morris(tree_t t);
 
 
 bool warp(tree_t p, tree_t q) {
-    requires { 0 <= j < k }
-    requires { q = t.cell j }
-    requires { t.crmd j = k-1 }
-    requires { c < k -> wf_rst t mem 0 k }
-    requires { c = k -> wf_rst t mem 0 (k-1) /\
-                        mem.mrst (t.cell (k-1)) = p }
     //@ requires 0 <= warp_j < morris_k;
-    //@ requires q = morris_t.cell[warp_j]
-    //@ requires morris_t.rmdt[warp_j] = morris_j - 1
-    //@ requires morris_c < morris_k => 
+    //@ requires q = morris_t.cell[warp_j];
+    //@ requires morris_t.rmdt[warp_j] = morris_j - 1;
+    //@ requires morris_c < morris_k ==> wf_rst(morris_t,0, morris_k);
+    //@ requires morris_c = morris_k ==> (wf_rst(morris_t, 0, morris_k -1)) && (TO DO (morris_t.cell, (morris_k - 1)) == p);
     if (q->right == NULL) {
         q->right = p;
         return true;
@@ -62,6 +57,15 @@ bool warp(tree_t p, tree_t q) {
 }
 
 void traversal(tree_t p) {
+    //@ requires TO DO;
+    //@ requires 0 <= k <= morris_t.size;
+    /*@ requires (morris_t.size == 0 ==> p == \null) 
+    && (morris_t.size > 0 ==> morris_k < morris_t.size 
+    && morris_t.cell[morris_k] == p 
+    && morris_t.lmdt[morris_k] == 0 
+    && morris_t.rmdt[morris_k] == morris_t.size - 1);*/
+    //@ requires wf_lst (morris_t, 0, morris_t.size);
+    //@ requires wf_rst (morris_t, 0, morris_t.size);
     if (p != NULL)
     //@ ghost morris_t = morris_t;
     //@ ghost morris_r = morris_k;
@@ -76,7 +80,17 @@ void visit(tree_t p) {
 
 
 void morris_visit(tree_t p) {
-      //@ ghost warp_j = morris_t.lchd[morris_k];
+    //@ requires 0 == morris_t.lmdt[morris_r] && morris_r <= morris_t.rmdt[morris_r] && morris_t.rmdt[morris_r] == morris_t.size - 1;
+    //@ requires 0 <= morris_c && morris_c == TO DO && morris_c <= morris_k && morris_k < morris_t.size;
+    //@ requires morris_p == morris_t.cell[morris_k];
+    //@ requires wf_lst(morris_t, 0, morris_t.size);
+    //@ requires \forall i; 0 <= i < morris_c ==> TO DO [i] == morris_t.cell[i];
+    //@ requires morris_c < morris_k ==> (morris_c == morris_t.lmdt[morris_k] && wf_rst(morris_t, 0, morris_k));
+    //@ requires (morris_c == morris_k && morris_t.lchd[morris_k] < morris_k) ==>  (wf_rst(morris_t, 0, morris_k-1) && morris_t.cell[morris_k-1]->right == p);
+    //@ requires (morris_c == morris_k && morris_t.lchd[morris_k] == morris_k) ==> wf_rst(morris_t, 0, morris_k);
+    //@ requires warped_rst(morris_t, morris_k, morris_t.size);
+
+    //@ ghost warp_j = morris_t.lchd[morris_k];
     if (p->left != NULL && warp(p, p->left)) {
         //@ ghost morris_t = morris_t;
         //@ ghost morris_r = morris_r;

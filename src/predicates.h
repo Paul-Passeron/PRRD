@@ -94,62 +94,51 @@
 
 
 /*@
-  predicate wf_lst{L}(tree_shape t, mem m, integer lo, integer hi) =
-    \forall integer i;
-      lo <= i < hi && 0 <= lo && hi <= t.size ==>
-        (( t.clmd(i) == i &&
-            t.clst(i) == i &&
-            \at(m.mlst(t.cell(i)), L) == \null )
-        ||
-          ( t.clst(i) <= t.crmd(t.clst(i)) &&
-            t.crmd(t.clst(i)) == i-1 &&
-            \at(m.mlst(t.cell(i)), L) == t.cell(t.clst(i)) ));
-*/
+  predicate wf_lst(tree_shape_t ts, integer lo, integer hi) =
+      \forall integer i; 0 <= lo <= i < hi <= ts.size ==>
+          (ts.lmdt[i] == ts.lchd[i] && ts.lchd[i] == i &&
+           ts.cell[i]->left == \null) ||
+          (ts.lchd[i] <= ts.rmdt[ts.lchd[i]] && ts.rmdt[ts.lchd[i]] == i-1 &&
+           ts.cell[i]->left == ts.cell[ts.lchd[i]]);
+@*/
 
 
 /*@
-  predicate wf_rst{L}(tree_shape t, mem m, integer lo, integer hi) =
-    \forall integer i;
-      lo <= i < hi && 0 <= lo && hi <= t.size ==>
-        (( t.crst(i) == i &&
-            t.crmd(i) == i &&
-            \at(m.mrst(t.cell(i)), L) == \null )
-        ||
-          ( t.clmd(t.crst(i)) == i+1 &&
-            t.clmd(t.crst(i)) <= t.crst(i) &&
-            \at(m.mrst(t.cell(i)), L) == t.cell(t.crst(i)) ));
-*/
+  predicate wf_rst(tree_shape_t ts, integer lo, integer hi) =
+      \forall integer i; 0 <= lo <= i < hi <= ts.size ==>
+          (i == ts.rchd[i] && i == ts.rmdt[i] &&
+           ts.cell[i]->right == \null) ||
+          (i+1 == ts.lmdt[ts.rchd[i]] && ts.lmdt[ts.rchd[i]] <= ts.rchd[i] &&
+           ts.cell[i]->right == ts.cell[ts.rchd[i]]);
+@*/
+
 
 /*@
-  predicate warped_rst{L}(tree_shape t, mem m, integer lo, integer hi) =
-    \forall integer i;
-      lo <= i < hi && 0 <= lo && hi <= t.size ==>
-        (( t.crst(i) == i &&
-            t.crmd(i) == i &&
-            (( i < t.size-1 &&
-                t.clmd(i+1) <= lo &&
-                \at(m.mrst(t.cell(i)), L) == t.cell(i+1) )
-            ||
-              ( i < t.size-1 &&
-                lo < t.clmd(i+1) &&
-                \at(m.mrst(t.cell(i)), L) == \null )
-            ||
-              ( i == t.size-1 &&
-                \at(m.mrst(t.cell(i)), L) == \null )))
-        ||
-          ( t.clmd(t.crst(i)) == i+1 &&
-            t.clmd(t.crst(i)) <= t.crst(i) &&
-            \at(m.mrst(t.cell(i)), L) == t.cell(t.crst(i)) ));
-*/
+  predicate warped_rst(tree_shape_t ts, integer lo, integer hi) =
+      \forall integer i; 0 <= lo <= i < hi <= ts.size ==>
+          (i == ts.rchd[i] && i == ts.rmdt[i] &&
+           ((i < ts.size-1 && ts.lmdt[i+1] <= lo && 
+             ts.cell[i]->right == ts.cell[i+1]) ||
+            (i < ts.size-1 && lo < ts.lmdt[i+1] && 
+             ts.cell[i]->right == \null) ||
+            (i == ts.size-1 && 
+             ts.cell[i]->right == \null))) ||
+          (i+1 == ts.lmdt[ts.rchd[i]] && ts.lmdt[ts.rchd[i]] <= ts.rchd[i] &&
+           ts.cell[i]->right == ts.cell[ts.rchd[i]]);
+@*/
 
 /*@
-  predicate frame{L1,L2}(tree_shape t, mem m1, mem m2) =
-    \forall loc p;
-      (\forall integer i; 0 <= i < t.size ==> p != \at(t.cell(i),L1)) ==>
-        \at(m1.mdat(p),L1) == \at(m2.mdat(p),L2) &&
-        \at(m1.mlst(p),L1) == \at(m2.mlst(p),L2) &&
-        \at(m1.mrst(p),L1) == \at(m2.mrst(p),L2);
-*/
+  predicate frame{L1, L2}(tree_shape_t ts) =
+      // D'abord : les cellules existent aux deux labels
+      (\forall integer i; 0 <= i < ts.size ==> 
+          \at(ts.cell[i], L1) && \at(ts.cell[i], L2)) &&
+      // Ensuite : les pointeurs hors de la forme ne changent pas
+      (\forall tree_t p; 
+          (\forall integer i; 0 <= i < ts.size ==> p != \at(ts.cell[i], L1)) ==>
+              \at(p->dat, L1) == \at(p->dat, L2) &&
+              \at(p->left, L1) == \at(p->left, L2) &&
+              \at(p->right, L1) == \at(p->right, L2));
+@*/
 
 
 #endif // INDUCTIVE_H
