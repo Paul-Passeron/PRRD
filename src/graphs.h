@@ -5,24 +5,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
-
-struct tree {
-  struct tree *left;
-  struct tree *right;
-  elt_t dat;
-};
-
-typedef struct tree *tree_t;
-
-typedef struct tree_shape_t {
-    tree_t *cell; //tree node
-    int *lchd; // left child
-    int *rchd; // right child
-    int *lmdt; // leftmost descendant
-    int *rmdt; // rightmost descendant
-    int size;
-}tree_shape_t;
-
+#include <common.h>
+#include <predicates.h>
 
 bool warp(tree_t t, tree_t q);
 void visit(tree_t t);
@@ -30,6 +14,8 @@ void traversal(tree_t t);
 void morris(tree_t t);
 
 #ifdef TREE_IMPL
+#define MAX_NODES 1024
+
 
 //@ ghost tree_shape_t morris_t;
 //@ ghost int morris_r;
@@ -37,14 +23,19 @@ void morris(tree_t t);
 //@ ghost int morris_k;
 //@ ghost int warp_j;
 
+//@ ghost struct tree *trace[MAX_NODES];
+//@ ghost int trace_len;
+//@ requires morris_t.size <= MAX_NODES;
+
 
 bool warp(tree_t p, tree_t q) {
     //@ requires 0 <= warp_j < morris_k;
-    //@ requires q = morris_t.cell[warp_j];
-    //@ requires morris_t.rmdt[warp_j] = morris_j - 1;
+    //@ requires q == morris_t.cell[warp_j];
+    //@ requires morris_t.rmdt[warp_j] == warp_j - 1;
     //@ requires morris_c < morris_k ==> wf_rst(morris_t,0, morris_k);
-    //@ requires morris_c = morris_k ==> (wf_rst(morris_t, 0, morris_k -1)) && (TO DO (morris_t.cell, (morris_k - 1)) == p);
-    if (q->right == NULL) {
+    //@ requires morris_c == morris_k ==> (wf_rst(morris_t, 0, morris_k -1)) && (morris_t.cell[morris_k - 1]->right == p);
+    // mem.mrst equivalent a ->right
+    if (q->right == NULL) {                                                    
         q->right = p;
         return true;
     }
@@ -57,8 +48,8 @@ bool warp(tree_t p, tree_t q) {
 }
 
 void traversal(tree_t p) {
-    //@ requires TO DO;
-    //@ requires 0 <= k <= morris_t.size;
+    //@ requires trace_len == 0;
+    //@ requires 0 <= morris_k <= morris_t.size;
     /*@ requires (morris_t.size == 0 ==> p == \null) 
     && (morris_t.size > 0 ==> morris_k < morris_t.size 
     && morris_t.cell[morris_k] == p 
@@ -81,10 +72,10 @@ void visit(tree_t p) {
 
 void morris_visit(tree_t p) {
     //@ requires 0 == morris_t.lmdt[morris_r] && morris_r <= morris_t.rmdt[morris_r] && morris_t.rmdt[morris_r] == morris_t.size - 1;
-    //@ requires 0 <= morris_c && morris_c == TO DO && morris_c <= morris_k && morris_k < morris_t.size;
-    //@ requires morris_p == morris_t.cell[morris_k];
+    //@ requires 0 <= morris_c && morris_c == trace_len && morris_c <= morris_k && morris_k < morris_t.size;
+    //@ requires p == morris_t.cell[morris_k];
     //@ requires wf_lst(morris_t, 0, morris_t.size);
-    //@ requires \forall i; 0 <= i < morris_c ==> TO DO [i] == morris_t.cell[i];
+        //@ requires \forall integer i; 0 <= i < morris_c ==> trace[i] == morris_t.cell[i];
     //@ requires morris_c < morris_k ==> (morris_c == morris_t.lmdt[morris_k] && wf_rst(morris_t, 0, morris_k));
     //@ requires (morris_c == morris_k && morris_t.lchd[morris_k] < morris_k) ==>  (wf_rst(morris_t, 0, morris_k-1) && morris_t.cell[morris_k-1]->right == p);
     //@ requires (morris_c == morris_k && morris_t.lchd[morris_k] == morris_k) ==> wf_rst(morris_t, 0, morris_k);
@@ -103,7 +94,7 @@ void morris_visit(tree_t p) {
           //@ ghost morris_t = morris_t;
           //@ ghost morris_r = morris_r;
           //@ ghost morris_c = morris_c + 1;
-          //@ ghost if (morris_t.lchd[morris_k] = morris_k)  {morris_k = morris_k + 1;} else {morris_k = morris_t.lchd[morris_k];}
+          //@ ghost if (morris_t.lchd[morris_k] == morris_k)  {morris_k = morris_k + 1;} else {morris_k = morris_t.lchd[morris_k];}
           morris_visit(p->right);
     }
 }

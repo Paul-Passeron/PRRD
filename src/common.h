@@ -18,4 +18,22 @@ typedef struct list_shape_t {
   int count;
 } list_shape;
 
+struct tree {
+  struct tree *left;
+  struct tree *right;
+  elt_t dat;
+};
+
+
+typedef struct tree *tree_t;
+
+typedef struct tree_shape_t {
+    tree_t *cell; //tree node
+    int *lchd; // left child
+    int *rchd; // right child
+    int *lmdt; // leftmost descendant
+    int *rmdt; // rightmost descendant
+    int size;
+}tree_shape_t;
+
 #endif // COMMON_H

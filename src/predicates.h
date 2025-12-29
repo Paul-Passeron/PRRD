@@ -129,16 +129,13 @@
 
 /*@
   predicate frame{L1, L2}(tree_shape_t ts) =
-      // D'abord : les cellules existent aux deux labels
-      (\forall integer i; 0 <= i < ts.size ==> 
-          \at(ts.cell[i], L1) && \at(ts.cell[i], L2)) &&
-      // Ensuite : les pointeurs hors de la forme ne changent pas
-      (\forall tree_t p; 
-          (\forall integer i; 0 <= i < ts.size ==> p != \at(ts.cell[i], L1)) ==>
+      (\forall integer i; 0 <= i < ts.size ==> \at(ts.cell[i], L1) && \at(ts.cell[i], L2)) &&
+      (\forall tree_t p; (\forall integer i; 0 <= i < ts.size ==> p != \at(ts.cell[i], L1)) ==>
               \at(p->dat, L1) == \at(p->dat, L2) &&
               \at(p->left, L1) == \at(p->left, L2) &&
               \at(p->right, L1) == \at(p->right, L2));
 @*/
+
 
 
 #endif // INDUCTIVE_H
