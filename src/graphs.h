@@ -35,6 +35,12 @@ bool warp(tree_t p, tree_t q) {
     //@ requires morris_c < morris_k ==> wf_rst(morris_t,0, morris_k);
     //@ requires morris_c == morris_k ==> (wf_rst(morris_t, 0, morris_k -1)) && (morris_t.cell[morris_k - 1]->right == p);
     // mem.mrst equivalent a ->right
+    //@ variant TO DO;
+    //@ ensures result <==> morris_c != morris_k;
+    //@ ensures morris_c == morris_k ==> morris_t.cell[morris_k-1]->right == \null;
+    //@ ensures morris_c < morris_k ==> morris_t.cell[morris_k-1]->right == p; 
+    //@ ensures morris_c < morris_k ==> warped_rst (morris_t, morris_t.lchd[morris_k], morris_k);
+    //@ ensures frame(morris_t);
     if (q->right == NULL) {                                                    
         q->right = p;
         return true;
@@ -57,6 +63,10 @@ void traversal(tree_t p) {
     && morris_t.rmdt[morris_k] == morris_t.size - 1);*/
     //@ requires wf_lst (morris_t, 0, morris_t.size);
     //@ requires wf_rst (morris_t, 0, morris_t.size);
+    //@ assigns t.cell[0..t.size-1]->right, trace_len, trace[0..MAX_NODES-1]; 
+    //@ ensures \forall integer i; 0 <= i < morris_t.size ==> morris_t.cell[i]->right == \old(morris_t.cell[i]->right);
+    //@ ensures trace_len == morris_t.size;
+    //@ ensures \forall integer i; 0 <= i < morris_t.size ==> trace[i] == morris_t.cell[i];
     if (p != NULL)
     //@ ghost morris_t = morris_t;
     //@ ghost morris_r = morris_k;
@@ -75,12 +85,16 @@ void morris_visit(tree_t p) {
     //@ requires 0 <= morris_c && morris_c == trace_len && morris_c <= morris_k && morris_k < morris_t.size;
     //@ requires p == morris_t.cell[morris_k];
     //@ requires wf_lst(morris_t, 0, morris_t.size);
-        //@ requires \forall integer i; 0 <= i < morris_c ==> trace[i] == morris_t.cell[i];
+    //@ requires \forall integer i; 0 <= i < morris_c ==> trace[i] == morris_t.cell[i];
     //@ requires morris_c < morris_k ==> (morris_c == morris_t.lmdt[morris_k] && wf_rst(morris_t, 0, morris_k));
     //@ requires (morris_c == morris_k && morris_t.lchd[morris_k] < morris_k) ==>  (wf_rst(morris_t, 0, morris_k-1) && morris_t.cell[morris_k-1]->right == p);
     //@ requires (morris_c == morris_k && morris_t.lchd[morris_k] == morris_k) ==> wf_rst(morris_t, 0, morris_k);
     //@ requires warped_rst(morris_t, morris_k, morris_t.size);
-
+    //@ TO DO variant
+    //@ ensures wf_rst(t, 0, t.size);
+    //@ ensures trace_len == morris_t.size;
+    //@ ensures \forall integer i; 0 <= i <= morris_t.size ==> trace[i] == morris_t.cell[i];
+    //@ ensures frame(morris_t);
     //@ ghost warp_j = morris_t.lchd[morris_k];
     if (p->left != NULL && warp(p, p->left)) {
         //@ ghost morris_t = morris_t;
