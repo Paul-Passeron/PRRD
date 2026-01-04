@@ -25,7 +25,15 @@ void value_reverse(lst_t sp, lst_t qp) {
 }
 
 /*@
-    // predicate reversal{L1, L2}(ls: list_shape, k: int) =
+    predicate reversal{L1, L2}(list_shape ls, int k) =
+        \forall int i; 0 <= i < \at(ls.count, L1) ==> (
+            i < k || \at(ls.count, L1) - k <= i ==>
+            \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2) && (
+                k <= i < \at(ls.count, L1) - k ==> \at(ls.cells[i]->car, L1) == \at(
+                    ls.cells[ls.count - 1 - i]->car
+                , L2)
+            )
+        );
 
  */
 
@@ -34,6 +42,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
     //@ requires listRL(back_again_ls, bp, back_again_k);
     //@ requires back_again_k <= back_again_ls.count - back_again_k;
     //@ requires back_again_ls.cells[back_again_ls.count - back_again_k] == np;
+    //@ requires reversal{Pre, Post}(back_again_ls, back_again_k);
   if (bp == NULL || np == NULL)
     return;
 
