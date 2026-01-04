@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <common.h>
-#include <predicates.h>
+#include "common.h"
+#include "predicates.h"
 
 bool warp(tree_t t, tree_t q);
 void visit(tree_t t);
@@ -38,10 +38,10 @@ bool warp(tree_t p, tree_t q) {
     //@ variant TO DO;
     //@ ensures result <==> morris_c != morris_k;
     //@ ensures morris_c == morris_k ==> morris_t.cell[morris_k-1]->right == \null;
-    //@ ensures morris_c < morris_k ==> morris_t.cell[morris_k-1]->right == p; 
+    //@ ensures morris_c < morris_k ==> morris_t.cell[morris_k-1]->right == p;
     //@ ensures morris_c < morris_k ==> warped_rst (morris_t, morris_t.lchd[morris_k], morris_k);
     //@ ensures frame(morris_t);
-    if (q->right == NULL) {                                                    
+    if (q->right == NULL) {
         q->right = p;
         return true;
     }
@@ -56,14 +56,14 @@ bool warp(tree_t p, tree_t q) {
 void traversal(tree_t p) {
     //@ requires trace_len == 0;
     //@ requires 0 <= morris_k <= morris_t.size;
-    /*@ requires (morris_t.size == 0 ==> p == \null) 
-    && (morris_t.size > 0 ==> morris_k < morris_t.size 
-    && morris_t.cell[morris_k] == p 
-    && morris_t.lmdt[morris_k] == 0 
+    /*@ requires (morris_t.size == 0 ==> p == \null)
+    && (morris_t.size > 0 ==> morris_k < morris_t.size
+    && morris_t.cell[morris_k] == p
+    && morris_t.lmdt[morris_k] == 0
     && morris_t.rmdt[morris_k] == morris_t.size - 1);*/
     //@ requires wf_lst (morris_t, 0, morris_t.size);
     //@ requires wf_rst (morris_t, 0, morris_t.size);
-    //@ assigns t.cell[0..t.size-1]->right, trace_len, trace[0..MAX_NODES-1]; 
+    //@ assigns t.cell[0..t.size-1]->right, trace_len, trace[0..MAX_NODES-1];
     //@ ensures \forall integer i; 0 <= i < morris_t.size ==> morris_t.cell[i]->right == \old(morris_t.cell[i]->right);
     //@ ensures trace_len == morris_t.size;
     //@ ensures \forall integer i; 0 <= i < morris_t.size ==> trace[i] == morris_t.cell[i];
@@ -112,7 +112,7 @@ void morris_visit(tree_t p) {
           morris_visit(p->right);
     }
 }
-                               
+
 
 
 #endif // TREE_IMPL
