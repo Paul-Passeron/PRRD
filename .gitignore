@@ -3,3 +3,4 @@ rapport/*
 !rapport/*.tex
 !rapport/Makefile
 src/main
+.frama-c/*
