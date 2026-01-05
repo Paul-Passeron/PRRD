@@ -11,7 +11,7 @@
 bool warp(tree_t t, tree_t q);
 void visit(tree_t t);
 void traversal(tree_t t);
-void morris(tree_t t);
+void morris_visit(tree_t t);
 
 #ifdef TREE_IMPL
 #define MAX_NODES 1024
@@ -35,7 +35,7 @@ void morris(tree_t t);
 @ requires morris_c == morris_k ==> (wf_rst(morris_t, 0, morris_k -1)) && (morris_t.cell[morris_k - 1]->right == p);
 @ requires morris_t.size <= MAX_NODES;
 @ decreases morris_k - warp_j;
-@ assigns morris_t, warp_j;
+@ assigns warp_j, morris_t.cell[0 .. morris_t.size-1]->right;
 @ ensures \result <==> morris_c != morris_k;
 @ ensures morris_c == morris_k ==> morris_t.cell[morris_k-1]->right == \null;
 @ ensures morris_c < morris_k ==> morris_t.cell[morris_k-1]->right == p;
@@ -62,7 +62,7 @@ bool warp(tree_t p, tree_t q) {
 @ requires wf_lst (morris_t, 0, morris_t.size);
 @ requires wf_rst (morris_t, 0, morris_t.size);
 @ requires morris_t.size <= MAX_NODES;
-@ assigns morris_t.cell[0 .. morris_t.size-1]->right, trace_len, trace[0 .. MAX_NODES-1];
+@ assigns morris_t.cell[0 .. morris_t.size-1]->right, trace_len, trace[0 .. MAX_NODES-1] ;
 @ ensures \forall integer i; 0 <= i < morris_t.size ==> morris_t.cell[i]->right == \old(morris_t.cell[i]->right);
 @ ensures trace_len == morris_t.size;
 @ ensures \forall integer i; 0 <= i < morris_t.size ==> trace[i] == morris_t.cell[i]; 
@@ -73,10 +73,17 @@ void traversal(tree_t p) {
     //@ ghost morris_r = morris_k;
     //@ ghost morris_c = 0;
     //@ ghost morris_k = morris_k;
-        morris(p);
+        morris_visit(p);
 }
 
+/*
+@ requires morris_t.size <= MAX_NODES;
+@ assigns trace, trace_len \from trace, trace_len;
+@ ensures trace_len == morris_t.size;
+*/
 void visit(tree_t p) {
+    //@ ghost trace[trace_len] = p;
+    //@ ghost trace_len++;
     printf("%d ", p->dat);
 }
 
@@ -91,6 +98,7 @@ void visit(tree_t p) {
 @ requires warped_rst(morris_t, morris_k, morris_t.size);
 @ requires morris_t.size <= MAX_NODES;
 @ decreases (morris_t.size - morris_c) + morris_k; 
+@ assigns trace_len, trace[0 .. MAX_NODES-1], morris_t.cell[0 .. morris_t.size-1]->right;
 @ ensures wf_rst(morris_t, 0, morris_t.size);
 @ ensures trace_len == morris_t.size;
 @ ensures \forall integer i; 0 <= i <= morris_t.size ==> trace[i] == morris_t.cell[i];
