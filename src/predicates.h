@@ -128,7 +128,7 @@
 @*/
 
 /*@
-  predicate frame{L1, L2}(tree_shape_t ts) =
+  predicate frame_tree{L1, L2}(tree_shape_t ts) =
       (\forall integer i; 0 <= i < ts.size ==> \at(ts.cell[i], L1) && \at(ts.cell[i], L2)) &&
       (\forall tree_t p; (\forall integer i; 0 <= i < ts.size ==> p != \at(ts.cell[i], L1)) ==>
               \at(p->dat, L1) == \at(p->dat, L2) &&
