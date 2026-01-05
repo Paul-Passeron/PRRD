@@ -18,7 +18,6 @@ void value_reverse(lst_t sp, lst_t qp);
 //
 //@ ghost list_shape value_reverse_ls;
 
-
 /*@ requires qp == NULL || \exists int i; 0 <= i < value_reverse_ls.count ==>
  value_reverse_ls.cells[i] == qp;
   @ requires valid_list(sp);
@@ -47,6 +46,16 @@ void value_reverse(lst_t sp, lst_t qp) {
     \forall lst_t x; x != NULL && valid_list(x) ==> \valid(x);
  */
 
+ /*@ lemma non_null_valid_list_next_is_valid:
+     \forall lst_t x; x != NULL && valid_list(x) ==> valid_list(x->cdr);
+  */
+
+
+/*@ lemma still_valid{L1, L2}:
+    \forall lst_t x, y; \at(x, L1) == \at(x, L2) && \valid{L2}(x) && valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
+   \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> valid_list{L2}(\at(x, L2));
+*/
+
 /*@ requires \valid(back_again_ls.cells[0..back_again_ls.count]);
   @ requires valid_list(sp);
   @ requires valid_list(bp);
@@ -68,16 +77,18 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   if (bp == NULL || np == NULL)
     return;
-  /*@ assert bp != NULL; */
-  /*@ assert valid_list(bp); */
-  /*@ assert \valid(bp); */
   elt_t tmp = bp->car;
   // /*@ assert \valid_list(np); */
   bp->car = np->car;
+  /*@ assert valid_list(bp); */
   np->car = tmp;
-
+  /*@ assert valid_list(np); */
   lst_t nbp = bp->cdr;
+  /*@ assert valid_list(nbp); */
+  /*@ assert valid_list(sp); */
   bp->cdr = sp;
+  /*@ assert valid_list(bp); */
+  /*@ assert valid_list(nbp); */
 
   //@ ghost back_again_k = back_again_k - 1;
   //@ ghost back_again_ls = back_again_ls;
@@ -98,7 +109,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   @ requires 2 * tortoise_hare_k <= tortoise_hare_ls.count;
   @ requires tortoise_hare_ls.cells[2*tortoise_hare_k] == fp;
   @ decreases tortoise_hare_ls.count - tortoise_hare_k;
-  @ assigns tortoise_hare_ls.cells[0..tortoise_hare_ls.count]->car;
+  @ assigns *tortoise_hare_ls.cells[0..tortoise_hare_ls.count];
   @ ensures listLR(tortoise_hare_ls, tortoise_hare_ls.cells[0], (int)0,
   tortoise_hare_ls.count, qp);
   @ ensures reversal{Old, Post}(tortoise_hare_ls, (int)0);
