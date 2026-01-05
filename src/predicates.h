@@ -156,6 +156,8 @@
               \at(p->right, L1) == \at(p->right, L2));
 @*/
 
+/*@ predicate valid_or_null(lst_t p) = p == NULL || \valid(p); */
+
 
 
 #endif // INDUCTIVE_H

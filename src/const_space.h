@@ -18,8 +18,12 @@ void value_reverse(lst_t sp, lst_t qp);
 //
 //@ ghost list_shape value_reverse_ls;
 
-/*@ requires \valid(qp);
-  @ requires \valid(sp);
+
+/*@ requires qp == NULL || \exists int i; 0 <= i < value_reverse_ls.count ==>
+ value_reverse_ls.cells[i] == qp;
+  @ requires valid_or_null(sp);
+  @ requires valid_or_null(qp);
+  @ requires value_reverse_ls.count < 10E5;
   @ requires \valid(value_reverse_ls.cells[0..value_reverse_ls.count]);
   @ requires listLR(value_reverse_ls, sp, (int)0, (int)value_reverse_ls.count,
  qp);
@@ -39,8 +43,11 @@ void value_reverse(lst_t sp, lst_t qp) {
   tortoise_hare(NULL, sp, sp, qp);
 }
 
-/*@ requires \valid(np);
-  @ requires \valid(back_again_ls.cells[0..back_again_ls.count]);
+/*@ requires \valid(back_again_ls.cells[0..back_again_ls.count]);
+  @ requires valid_or_null(sp);
+  @ requires valid_or_null(bp);
+  @ requires valid_or_null(np);
+  @ requires back_again_ls.count < 10E5;
   @ requires listLR(back_again_ls, sp, back_again_k, back_again_ls.count,
 back_again_ls.cells[back_again_ls.count]);
   @ requires listRL(back_again_ls, bp, back_again_k);
@@ -70,10 +77,12 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   back_again(nbp, bp, np->cdr);
 }
 
-/*@ requires \valid(bp);
-  @ requires \valid(sp);
-  @ requires \valid(fp);
-  @ requires \valid(qp);
+/*@ requires fp == NULL ==> qp == NULL;
+  @ requires valid_or_null(bp);
+  @ requires valid_or_null(sp);
+  @ requires valid_or_null(fp);
+  @ requires valid_or_null(qp);
+  @ requires tortoise_hare_ls.count < 10E5;
   @ requires \valid(tortoise_hare_ls.cells[0..tortoise_hare_ls.count]);
   @ requires listLR(tortoise_hare_ls, sp, tortoise_hare_k,
   tortoise_hare_ls.count, qp);
