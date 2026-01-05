@@ -18,31 +18,43 @@ void value_reverse(lst_t sp, lst_t qp);
 //
 //@ ghost list_shape value_reverse_ls;
 
+/*@ requires \valid(qp);
+  @ requires \valid(sp);
+  @ requires \valid(value_reverse_ls.cells[0..value_reverse_ls.count]);
+  @ requires listLR(value_reverse_ls, sp, (int)0, (int)value_reverse_ls.count,
+ qp);
+  @ assigns value_reverse_ls.cells[0..value_reverse_ls.count]->car;
+  @ ensures listLR(value_reverse_ls, sp, (int)0, (int)value_reverse_ls.count,
+ qp);
+  @ ensures \forall int i; 0 <= i < value_reverse_ls.count ==>
+    value_reverse_ls.cells[i]->car ==
+ \old(value_reverse_ls.cells[value_reverse_ls.count - 1 - i]->car) &&
+    value_reverse_ls.cells[i]->cdr ==
+ \old(value_reverse_ls.cells[value_reverse_ls.count - 1 - i]->cdr);
+ @ ensures frame_list{Old, Post}(value_reverse_ls);
+ */
 void value_reverse(lst_t sp, lst_t qp) {
   //@ ghost tortoise_hare_ls = value_reverse_ls;
   //@ ghost tortoise_hare_k = 0;
   tortoise_hare(NULL, sp, sp, qp);
 }
 
-/*@
-    predicate reversal{L1, L2}(list_shape ls, int k) =
-        \forall int i; 0 <= i < \at(ls.count, L1) ==> (
-            i < k || \at(ls.count, L1) - k <= i ==>
-            \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2) && (
-                k <= i < \at(ls.count, L1) - k ==> \at(ls.cells[i]->car, L1) == \at(
-                    ls.cells[ls.count - 1 - i]->car
-                , L2)
-            )
-        );
-
- */
-
+/*@ requires \valid(np);
+  @ requires \valid(back_again_ls.cells[0..back_again_ls.count]);
+  @ requires listLR(back_again_ls, sp, back_again_k, back_again_ls.count,
+back_again_ls.cells[back_again_ls.count]);
+  @ requires listRL(back_again_ls, bp, back_again_k);
+  @ requires back_again_k <= back_again_ls.count - back_again_k;
+  @ requires back_again_ls.cells[back_again_ls.count - back_again_k] == np;
+  @ decreases back_again_k;
+  @ assigns back_again_ls.cells[0..back_again_ls.count]->car;
+  @ ensures listLR(back_again_ls, back_again_ls.cells[0], (int)0,
+(int)(back_again_ls.count), back_again_ls.cells[back_again_ls.count]);
+  @ ensures reversal{Old, Post}(back_again_ls, (int)0);
+  @ ensures frame_list{Old, Post}(back_again_ls);
+*/
 void back_again(lst_t bp, lst_t sp, lst_t np) {
-    //@ requires listLR(back_again_ls, sp, back_again_k, back_again_ls.count, back_again_ls.cells[back_again_ls.count-1]);
-    //@ requires listRL(back_again_ls, bp, back_again_k);
-    //@ requires back_again_k <= back_again_ls.count - back_again_k;
-    //@ requires back_again_ls.cells[back_again_ls.count - back_again_k] == np;
-    //@ requires reversal{Pre, Post}(back_again_ls, back_again_k);
+
   if (bp == NULL || np == NULL)
     return;
 
@@ -58,6 +70,23 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   back_again(nbp, bp, np->cdr);
 }
 
+/*@ requires \valid(bp);
+  @ requires \valid(sp);
+  @ requires \valid(fp);
+  @ requires \valid(qp);
+  @ requires \valid(tortoise_hare_ls.cells[0..tortoise_hare_ls.count]);
+  @ requires listLR(tortoise_hare_ls, sp, tortoise_hare_k,
+  tortoise_hare_ls.count, qp);
+  @ requires listRL(tortoise_hare_ls, bp, tortoise_hare_k);
+  @ requires 2 * tortoise_hare_k <= tortoise_hare_ls.count;
+  @ requires tortoise_hare_ls.cells[2*tortoise_hare_k] == fp;
+  @ decreases tortoise_hare_ls.count - tortoise_hare_k;
+  @ assigns tortoise_hare_ls.cells[0..tortoise_hare_ls.count]->car;
+  @ ensures listLR(tortoise_hare_ls, tortoise_hare_ls.cells[0], (int)0,
+  tortoise_hare_ls.count, qp);
+  @ ensures reversal{Old, Post}(tortoise_hare_ls, (int)0);
+  @ ensures frame_list{Old, Post}(tortoise_hare_ls);
+ */
 void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
   lst_t nfp;
   if (fp == qp) {

@@ -49,7 +49,7 @@
  */
 
 /*@
-    predicate frame{L1, L2}(list_shape ls)=
+    predicate frame_list{L1, L2}(list_shape ls)=
         \forall int i; 0 <= i < ls.count ==> \at(ls.cells[i], L1) && \at(ls.cells[i], L2) &&
         \forall lst_t p; (\forall int i; 0 <= i < ls.count ==> p !=
             \at(ls.cells[i], L1)) ==>
@@ -57,7 +57,27 @@
                 \at(p->cdr, L1) == \at(p->cdr, L2);
  */
 
+ /*
+ (** the contents of the `car` fields in ls[k..size-k[ have been swapped *)
+ predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
+   forall i. 0 <= i < ls.size ->
+     (i < k \/ ls.size - k <= i ->
+       m1.mcar (ls.cell i) = m2.mcar (ls.cell i)) /\
+     (k <= i < ls.size - k ->
+       m1.mcar (ls.cell i) = m2.mcar (ls.cell (ls.size - 1 - i)))
+*/
 
+ /*@
+     predicate reversal{L1, L2}(list_shape ls, int k) =
+         \forall int i; 0 <= i < \at(ls.count, L1) ==> (
+             i < k || \at(ls.count, L1) - k <= i ==>
+             \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2) && (
+                 k <= i < \at(ls.count, L1) - k ==> \at(ls.cells[i]->car, L1) == \at(
+                     ls.cells[ls.count - 1 - i]->car
+                 , L2)
+             )
+         );
+  */
 
 /*
 *
@@ -117,11 +137,11 @@
   predicate warped_rst(tree_shape_t ts, integer lo, integer hi) =
       \forall integer i; 0 <= lo <= i < hi <= ts.size ==>
           (i == ts.rchd[i] && i == ts.rmdt[i] &&
-           ((i < ts.size-1 && ts.lmdt[i+1] <= lo && 
+           ((i < ts.size-1 && ts.lmdt[i+1] <= lo &&
              ts.cell[i]->right == ts.cell[i+1]) ||
-            (i < ts.size-1 && lo < ts.lmdt[i+1] && 
+            (i < ts.size-1 && lo < ts.lmdt[i+1] &&
              ts.cell[i]->right == \null) ||
-            (i == ts.size-1 && 
+            (i == ts.size-1 &&
              ts.cell[i]->right == \null))) ||
           (i+1 == ts.lmdt[ts.rchd[i]] && ts.lmdt[ts.rchd[i]] <= ts.rchd[i] &&
            ts.cell[i]->right == ts.cell[ts.rchd[i]]);
