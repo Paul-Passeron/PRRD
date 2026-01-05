@@ -21,8 +21,8 @@ void value_reverse(lst_t sp, lst_t qp);
 
 /*@ requires qp == NULL || \exists int i; 0 <= i < value_reverse_ls.count ==>
  value_reverse_ls.cells[i] == qp;
-  @ requires valid_or_null(sp);
-  @ requires valid_or_null(qp);
+  @ requires valid_list(sp);
+  @ requires valid_list(qp);
   @ requires value_reverse_ls.count < 10E5;
   @ requires \valid(value_reverse_ls.cells[0..value_reverse_ls.count]);
   @ requires listLR(value_reverse_ls, sp, (int)0, (int)value_reverse_ls.count,
@@ -43,10 +43,14 @@ void value_reverse(lst_t sp, lst_t qp) {
   tortoise_hare(NULL, sp, sp, qp);
 }
 
+/*@ lemma non_null_valid_list_is_valid:
+    \forall lst_t x; x != NULL && valid_list(x) ==> \valid(x);
+ */
+
 /*@ requires \valid(back_again_ls.cells[0..back_again_ls.count]);
-  @ requires valid_or_null(sp);
-  @ requires valid_or_null(bp);
-  @ requires valid_or_null(np);
+  @ requires valid_list(sp);
+  @ requires valid_list(bp);
+  @ requires valid_list(np);
   @ requires back_again_ls.count < 10E5;
   @ requires listLR(back_again_ls, sp, back_again_k, back_again_ls.count,
 back_again_ls.cells[back_again_ls.count]);
@@ -64,8 +68,11 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   if (bp == NULL || np == NULL)
     return;
-
+  /*@ assert bp != NULL; */
+  /*@ assert valid_list(bp); */
+  /*@ assert \valid(bp); */
   elt_t tmp = bp->car;
+  // /*@ assert \valid_list(np); */
   bp->car = np->car;
   np->car = tmp;
 
@@ -78,11 +85,12 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 }
 
 /*@ requires fp == NULL ==> qp == NULL;
-  @ requires valid_or_null(bp);
-  @ requires valid_or_null(sp);
-  @ requires valid_or_null(fp);
-  @ requires valid_or_null(qp);
+  @ requires valid_list(bp);
+  @ requires valid_list(sp);
+  @ requires valid_list(fp);
+  @ requires valid_list(qp);
   @ requires tortoise_hare_ls.count < 10E5;
+  @ requires tortoise_hare_ls.count >= 0;
   @ requires \valid(tortoise_hare_ls.cells[0..tortoise_hare_ls.count]);
   @ requires listLR(tortoise_hare_ls, sp, tortoise_hare_k,
   tortoise_hare_ls.count, qp);
@@ -95,6 +103,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   tortoise_hare_ls.count, qp);
   @ ensures reversal{Old, Post}(tortoise_hare_ls, (int)0);
   @ ensures frame_list{Old, Post}(tortoise_hare_ls);
+  @ ensures tortoise_hare_ls.count >= 0;
  */
 void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
   lst_t nfp;

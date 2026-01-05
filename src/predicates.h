@@ -50,68 +50,73 @@
 
 /*@
     predicate frame_list{L1, L2}(list_shape ls)=
-        \forall int i; 0 <= i < ls.count ==> \at(ls.cells[i], L1) && \at(ls.cells[i], L2) &&
+        \forall int i; 0 <= i < ls.count ==> \at(ls.cells[i], L1) &&
+   \at(ls.cells[i], L2) &&
         \forall lst_t p; (\forall int i; 0 <= i < ls.count ==> p !=
             \at(ls.cells[i], L1)) ==>
                 \at(p->car, L1) == \at(p->car, L2) &&
                 \at(p->cdr, L1) == \at(p->cdr, L2);
  */
 
- /*
- (** the contents of the `car` fields in ls[k..size-k[ have been swapped *)
- predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
-   forall i. 0 <= i < ls.size ->
-     (i < k \/ ls.size - k <= i ->
-       m1.mcar (ls.cell i) = m2.mcar (ls.cell i)) /\
-     (k <= i < ls.size - k ->
-       m1.mcar (ls.cell i) = m2.mcar (ls.cell (ls.size - 1 - i)))
+/*
+(** the contents of the `car` fields in ls[k..size-k[ have been swapped *)
+predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
+  forall i. 0 <= i < ls.size ->
+    (i < k \/ ls.size - k <= i ->
+      m1.mcar (ls.cell i) = m2.mcar (ls.cell i)) /\
+    (k <= i < ls.size - k ->
+      m1.mcar (ls.cell i) = m2.mcar (ls.cell (ls.size - 1 - i)))
 */
 
- /*@
-     predicate reversal{L1, L2}(list_shape ls, int k) =
-         \forall int i; 0 <= i < \at(ls.count, L1) ==> (
-             i < k || \at(ls.count, L1) - k <= i ==>
-             \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2) && (
-                 k <= i < \at(ls.count, L1) - k ==> \at(ls.cells[i]->car, L1) == \at(
-                     ls.cells[ls.count - 1 - i]->car
-                 , L2)
-             )
-         );
-  */
+/*@
+    predicate reversal{L1, L2}(list_shape ls, int k) =
+        \forall int i; 0 <= i < \at(ls.count, L1) ==> (
+            i < k || \at(ls.count, L1) - k <= i ==>
+            \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2) && (
+                k <= i < \at(ls.count, L1) - k ==> \at(ls.cells[i]->car, L1) ==
+   \at( ls.cells[ls.count - 1 - i]->car , L2)
+            )
+        );
+ */
+
+/*@ predicate valid_or_null(lst_t p) = p == NULL || \valid(p); */
+
+/*@ predicate valid_list(lst_t p) =
+    p == NULL || (\valid(p) && valid_list(p->cdr));
+*/
 
 /*
-*
-* type tree_shape = {
-*    cell : int -> loc;  (* location *)
-*    clmd : int -> int;  (* left-most descendant *)
-*    clst : int -> int;  (* left subtree *)
-*    crst : int -> int;  (* right subtree *)
-*    crmd : int -> int;  (* right-most descendant *)
-*    size : int;
-*  }
-*
-*
-*  invariant { 0 <= size }
-*  invariant {
-*    forall i. 0 <= i < size -> cell i <> null }
-*  invariant {
-*    forall i. 0 <= i < size ->
-*      forall j. 0 <= j < size -> i <> j -> cell i <> cell j }
-*  invariant {
-*    forall i. 0 <= i < size ->
-*      0 <= clmd i = clmd (clst i) <= clst i <=
-*        i <= crst i <= crmd (crst i) = crmd i < size }
-*  invariant {
-*    forall i. 0 <= i < size -> clst i = i -> clmd i = i }
-*  invariant {
-*    forall i. 0 <= i < size -> crst i = i -> crmd i = i }
-*  invariant {
-*    forall i. 0 <= i < size -> clst i < i -> crmd (clst i) = i-1 }
-*  invariant {
-*    forall i. 0 <= i < size -> crst i > i -> clmd (crst i) = i+1 }
-*
-*/
-
+ *
+ * type tree_shape = {
+ *    cell : int -> loc;  (* location *)
+ *    clmd : int -> int;  (* left-most descendant *)
+ *    clst : int -> int;  (* left subtree *)
+ *    crst : int -> int;  (* right subtree *)
+ *    crmd : int -> int;  (* right-most descendant *)
+ *    size : int;
+ *  }
+ *
+ *
+ *  invariant { 0 <= size }
+ *  invariant {
+ *    forall i. 0 <= i < size -> cell i <> null }
+ *  invariant {
+ *    forall i. 0 <= i < size ->
+ *      forall j. 0 <= j < size -> i <> j -> cell i <> cell j }
+ *  invariant {
+ *    forall i. 0 <= i < size ->
+ *      0 <= clmd i = clmd (clst i) <= clst i <=
+ *        i <= crst i <= crmd (crst i) = crmd i < size }
+ *  invariant {
+ *    forall i. 0 <= i < size -> clst i = i -> clmd i = i }
+ *  invariant {
+ *    forall i. 0 <= i < size -> crst i = i -> crmd i = i }
+ *  invariant {
+ *    forall i. 0 <= i < size -> clst i < i -> crmd (clst i) = i-1 }
+ *  invariant {
+ *    forall i. 0 <= i < size -> crst i > i -> clmd (crst i) = i+1 }
+ *
+ */
 
 /*@
   predicate wf_lst(tree_shape_t ts, integer lo, integer hi) =
@@ -122,7 +127,6 @@
            ts.cell[i]->left == ts.cell[ts.lchd[i]]);
 @*/
 
-
 /*@
   predicate wf_rst(tree_shape_t ts, integer lo, integer hi) =
       \forall integer i; 0 <= lo <= i < hi <= ts.size ==>
@@ -131,7 +135,6 @@
           (i+1 == ts.lmdt[ts.rchd[i]] && ts.lmdt[ts.rchd[i]] <= ts.rchd[i] &&
            ts.cell[i]->right == ts.cell[ts.rchd[i]]);
 @*/
-
 
 /*@
   predicate warped_rst(tree_shape_t ts, integer lo, integer hi) =
@@ -149,15 +152,13 @@
 
 /*@
   predicate frame_tree{L1, L2}(tree_shape_t ts) =
-      (\forall integer i; 0 <= i < ts.size ==> \at(ts.cell[i], L1) && \at(ts.cell[i], L2)) &&
-      (\forall tree_t p; (\forall integer i; 0 <= i < ts.size ==> p != \at(ts.cell[i], L1)) ==>
+      (\forall integer i; 0 <= i < ts.size ==> \at(ts.cell[i], L1) &&
+\at(ts.cell[i], L2)) &&
+      (\forall tree_t p; (\forall integer i; 0 <= i < ts.size ==> p !=
+\at(ts.cell[i], L1)) ==>
               \at(p->dat, L1) == \at(p->dat, L2) &&
               \at(p->left, L1) == \at(p->left, L2) &&
               \at(p->right, L1) == \at(p->right, L2));
 @*/
-
-/*@ predicate valid_or_null(lst_t p) = p == NULL || \valid(p); */
-
-
 
 #endif // INDUCTIVE_H
