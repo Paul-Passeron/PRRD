@@ -81,9 +81,28 @@ predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
 
 /*@ predicate valid_or_null(lst_t p) = p == NULL || \valid(p); */
 
-/*@ predicate valid_list(lst_t p) =
-    p == NULL || (\valid(p) && valid_list(p->cdr));
+/*@ logic lst_t nth(lst_t l, integer n) = 
+    n == 0 || l == NULL  ? l : nth(l->cdr, n-1);
 */
+
+/*@
+  predicate separated_list_aux(lst_t p, integer n) =
+    \forall integer i, j; 0 <= i < j < n ==>
+      \separated(nth(p, i), nth(p, j));
+*/
+
+/*@
+  predicate separated_list(lst_t p) =
+    \exists integer n; n >= 0 &&
+      nth(p, n) == \null &&
+      \forall integer i; i < n ==> \valid(nth(p, i)) &&
+      separated_list_aux(p, n);
+*/
+
+/*@ predicate valid_list(lst_t p) =
+    p == NULL || (\valid(p) && separated_list(p) && valid_list(p->cdr));
+*/
+
 
 /*
  *

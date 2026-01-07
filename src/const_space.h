@@ -14,6 +14,8 @@ void value_reverse(lst_t sp, lst_t qp);
 //@ ghost int tortoise_hare_k;
 //@ ghost int back_again_k;
 
+
+
 /*@ requires qp == NULL || \exists int i; 0 <= i < ls.count ==>
  ls.cells[i] == qp;
   @ requires valid_list(sp);
@@ -22,7 +24,7 @@ void value_reverse(lst_t sp, lst_t qp);
   @ requires \valid(ls.cells[0..ls.count]);
   @ requires listLR(ls, sp, (int)0, (int)ls.count,
  qp);
- @ requires \valid(ls.cells[0..ls.count]);
+  @ requires \valid(ls.cells[0..ls.count]);
   @ assigns ls.cells[0..ls.count]->car;
   @ ensures listLR(ls, sp, (int)0, (int)ls.count,
  qp);
@@ -47,8 +49,42 @@ void value_reverse(lst_t sp, lst_t qp) {
     \forall lst_t x; x != NULL && valid_list(x) ==> valid_list(x->cdr);
  */
 
+
+
+/*@ predicate two_separated(lst_t l1, lst_t l2) =
+  \exists integer n1, n2; n1 >= 0 && n2 >= 0 && nth(l1, n1) == \null && 
+  \forall integer i, j; n1 > i >= 0 && n2 > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
+*/
+
+/*@ lemma length_of_nonnull_valid:
+    \forall lst_t l;
+    valid_list(l) && l != \null ==>
+      \exists integer n; n >= 1 && nth(l, n) == \null && 
+        \forall integer i; i < n ==> \valid(nth(l, i));
+ */
+
+ /*@ lemma sep_pointers:
+  \forall lst_t l1, l2; \separated(l1, l2) ==> l1 != l2;
+ */
+
+
+/*@ lemma nth_zero:
+  \forall lst_t l; nth(l, 0) == l;
+*/
+
+ /*@ lemma two_sep_and_valid_implies_diff:
+  \forall lst_t x, y; two_separated(x, y) && x != \null && y != \null && 
+    valid_list(x) && valid_list(y) ==> \separated(x, y);
+ */
+
+ /*@ lemma still_separated{L1, L2}:
+    \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
+   valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
+   \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> separated_list{L2}(\at(x, L2));
+ */
+
 /*@ lemma still_valid{L1, L2}:
-    \forall lst_t x, y; \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
+    \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
    valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
    \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> valid_list{L2}(\at(x, L2));
 */
@@ -90,6 +126,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   /*@ assert valid_list(sp); */
   /*@ assert \valid(bp); */
   /*@ assert valid_or_null(nbp); */
+  //@ assert(two_separated(bp, sp)); 
   bp->cdr = sp;
   /*@ assert \valid(bp); */
   /*@ assert valid_list(sp); */
@@ -103,6 +140,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 }
 
 /*@ requires fp == NULL ==> qp == NULL;
+  @ requires bp != NULL && sp != NULL ==> sp != bp;
   @ requires tortoise_hare_k >= 0;
   @ requires valid_list(bp);
   @ requires valid_list(sp);
@@ -125,25 +163,26 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   @ ensures ls.count >= 0;
   @ ensures tortoise_hare_k >= 0;
  */
+
 void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
   lst_t nfp;
   if (fp == qp) {
-    //@ghost back_again_k = tortoise_hare_k;
-    //@ghost ls = ls;
+    //@ ghost back_again_k = tortoise_hare_k;
     back_again(bp, sp, sp);
   } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
-    //@ghost back_again_k = tortoise_hare_k;
-    //@ghost ls = ls;
+    //@ ghost back_again_k = tortoise_hare_k;
     back_again(bp, sp, sp->cdr);
   } else {
-    // @ assert valid_list(nfp->cdr);
+    //@ assert valid_list(nfp);
+    //@ assert valid_list(nfp->cdr);
     nfp = fp->cdr->cdr;
-    // @ assert valid_list(nfp);
+    //@ assert valid_list(nfp);
     lst_t nsp = sp->cdr;
-    // @ assert valid_list(nsp);
-    // @ assert valid_list(bp);
+    //@ assert valid_list(nsp);
+    //@ assert valid_list(bp);
     sp->cdr = bp;
-    // @ assert valid_list(sp);
+    //@ assert valid_list(sp->cdr);
+    //@ assert valid_list(sp);
 
     //@ ghost tortoise_hare_k = tortoise_hare_k + 1;
     tortoise_hare(sp, nsp, nfp, qp);
@@ -152,3 +191,7 @@ void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
 
 #endif // CONST_SPACE_IMPL
 #endif // CONST_SPACE_H
+
+#include <stdlib.h>
+
+
