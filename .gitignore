@@ -1,6 +1,6 @@
-rapport/*
-!rapport/*.pdf
-!rapport/*.tex
-!rapport/Makefile
+rapport/article/*
+!rapport/article/*.pdf
+!rapport/article/*.tex
+!rapport/article/Makefile
 src/main
 src/.frama-c/*
