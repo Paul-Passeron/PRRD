@@ -182,4 +182,8 @@ predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
               \at(p->right, L1) == \at(p->right, L2));
 @*/
 
+/*@ predicate valid_tree(tree_t p) =
+    p == \null || (\valid(p) && valid_tree(p->left) && valid_tree(p->right));
+*/
+
 #endif // INDUCTIVE_H
