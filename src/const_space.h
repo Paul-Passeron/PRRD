@@ -20,6 +20,7 @@ void value_reverse(lst_t sp, lst_t qp);
  ls.cells[i] == qp;
   @ requires valid_list(sp);
   @ requires valid_list(qp);
+  @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires ls.count < 10E5;
   @ requires \valid(ls.cells[0..ls.count]);
   @ requires listLR(ls, sp, (int)0, (int)ls.count,
@@ -49,8 +50,6 @@ void value_reverse(lst_t sp, lst_t qp) {
     \forall lst_t x; x != NULL && valid_list(x) ==> valid_list(x->cdr);
  */
 
-
-
 /*@ predicate two_separated(lst_t l1, lst_t l2) =
   \exists integer n1, n2; n1 >= 0 && n2 >= 0 && nth(l1, n1) == \null && 
   \forall integer i, j; n1 > i >= 0 && n2 > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
@@ -60,13 +59,12 @@ void value_reverse(lst_t sp, lst_t qp) {
     \forall lst_t l;
     valid_list(l) && l != \null ==>
       \exists integer n; n >= 1 && nth(l, n) == \null && 
-        \forall integer i; i < n ==> \valid(nth(l, i));
+        \forall integer i; 0 <= i < n ==> \valid(nth(l, i));
  */
 
  /*@ lemma sep_pointers:
   \forall lst_t l1, l2; \separated(l1, l2) ==> l1 != l2;
  */
-
 
 /*@ lemma two_sep_first_elem:
   \forall lst_t l1, l2, integer n1, n2; 
@@ -87,22 +85,138 @@ void value_reverse(lst_t sp, lst_t qp) {
   \forall lst_t l; nth(l, 0) == l;
 */
 
-
-/*@ lemma still_separated{L1, L2}:
-  \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
-  valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
-  \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> separated_list{L2}(\at(x, L2));
+/*@ lemma nth_cons:
+  \forall lst_t x, integer n;
+    \valid(x) && n >= 1 ==> 
+    nth(x, n) == nth(x->cdr, n-1);
 */
 
-/*@ lemma still_valid{L1, L2}:
-    \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
-   valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
-   \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> valid_list{L2}(\at(x, L2));
+/*@ lemma separated_from_tail:
+  \forall lst_t x, integer n;
+    \valid(x) &&
+    n >= 0 &&
+    nth(x->cdr, n) == \null &&
+    (\forall integer i; 0 <= i < n ==> \separated(x, nth(x->cdr, i))) &&
+    separated_list_aux(x->cdr, n)
+    ==> separated_list_aux(x, n+1);
 */
+
+/*@ lemma nth_shift:
+  \forall lst_t x, integer k;
+    \valid(x) && k >= 1 ==> nth(x, k) == nth(x->cdr, k-1);
+*/
+
+/*@ lemma separated_list_witness:
+  \forall lst_t p, integer n;
+    n >= 0 &&
+    nth(p, n) == \null &&
+    (\forall integer i; 0 <= i < n ==> \valid(nth(p, i))) &&
+    separated_list_aux(p, n)
+    ==> separated_list(p);
+*/
+
+
+/*@ lemma separated_list_from_two_sep:
+  \forall lst_t x, y, integer n;
+  \valid(x) && x->cdr == y && n >= 0 &&
+  nth(y, n) == \null && 
+  (\forall integer i; 0 <= i < n ==> \valid(nth(y, i))) && 
+  separated_list_aux(y, n) && 
+  (\forall integer i; 0 <= i < n ==> \separated(x, nth(y, i)))
+  ==> separated_list(x);
+*/
+
+/*@ lemma separated_preserved{L1, L2}:
+  \forall lst_t a, b;
+    \separated(a, b) && 
+    \valid{L2}(a) && \valid{L2}(b)
+    ==> \separated(a, b);
+*/
+
+/*@ lemma two_sep_gives_x_sep_from_y{L}:
+  \forall lst_t x, y, integer n1, n2;
+    n1 >= 1 && n2 >= 0 &&
+    nth{L}(x, n1) == \null &&
+    nth{L}(y, n2) == \null &&
+    (\forall integer i, j; 0 <= i < n1 && 0 <= j < n2 ==> \separated(nth{L}(x, i), nth{L}(y, j)))
+    ==> (\forall integer j; 0 <= j < n2 ==> \separated(x, nth{L}(y, j)));
+*/
+
+/*@ lemma nth_succ{L}:
+  \forall lst_t x, integer n;
+    \valid{L}(x) && n >= 0
+    ==> nth{L}(x, n+1) == nth{L}(\at(x->cdr, L), n);
+*/
+
+/*@ lemma nth_cdr_eq{L}:
+  \forall lst_t x, y, integer n;
+    \valid{L}(x) &&
+    \at(x->cdr, L) == y &&
+    n >= 0
+    ==> nth{L}(x, n+1) == nth{L}(y, n);
+*/
+
+/*@ lemma cons_null_at{L}:
+  \forall lst_t x, y, integer n;
+    \valid{L}(x) &&
+    \at(x->cdr, L) == y &&
+    n >= 0 &&
+    nth{L}(y, n) == \null
+    ==> nth{L}(x, n+1) == \null;
+*/
+
+/*@ lemma cons_all_valid{L}:
+  \forall lst_t x, y, integer n;
+    \valid{L}(x) &&
+    \at(x->cdr, L) == y &&
+    n >= 0 &&
+    (\forall integer i; 0 <= i < n ==> \valid{L}(nth{L}(y, i)))
+    ==> (\forall integer i; 0 <= i < n+1 ==> \valid{L}(nth{L}(x, i)));
+*/
+
+/*@ lemma cons_separated_aux{L}:
+  \forall lst_t x, y, integer n;
+    \valid{L}(x) &&
+    \at(x->cdr, L) == y &&
+    n >= 0 &&
+    separated_list_aux{L}(y, n) &&
+    (\forall integer i; 0 <= i < n ==> \separated(x, nth{L}(y, i)))
+    ==> separated_list_aux{L}(x, n+1);
+*/
+
+/*@ lemma still_separated_final{L}:
+  \forall lst_t x, y, integer n;
+    n >= 0 &&
+    \valid{L}(x) &&
+    \at(x->cdr, L) == y &&
+    nth{L}(y, n) == \null &&
+    (\forall integer i; 0 <= i < n ==> \valid{L}(nth{L}(y, i))) &&
+    separated_list_aux{L}(y, n) &&
+    (\forall integer i; 0 <= i < n ==> \separated(x, nth{L}(y, i)))
+    ==> separated_list{L}(x);
+*/
+
+
+/*@ lemma still_valid_explicit{L}:
+  \forall lst_t x, y;
+    \valid{L}(x) &&
+    \at(x->cdr, L) == y &&
+    separated_list{L}(x) &&
+    valid_list{L}(y)
+    ==> valid_list{L}(x);
+*/
+
+
+// /*@ lemma still_valid{L1, L2}:
+//     \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
+//    valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
+//    \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> valid_list{L2}(\at(x, L2));
+// */
 
 /*@ requires \valid(ls.cells[0..ls.count]);
   @ requires ((bp == NULL || sp == NULL) && back_again_k >= 0) || back_again_k >
 0;
+  @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires bp != NULL && sp != NULL ==> sp != bp;
   @ requires valid_list(sp);
   @ requires valid_list(bp);
@@ -127,7 +241,6 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   if (bp == NULL || np == NULL)
     return;
   elt_t tmp = bp->car;
-  // /*@ assert \valid_list(np); */
   bp->car = np->car;
   /*@ assert valid_list(bp); */
   np->car = tmp;
@@ -150,9 +263,16 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   back_again(nbp, bp, np->cdr);
 }
 
+/*@lemma all_sep_means_index_eq_means_eq:
+  \forall lst_t *tab, integer i, j; \exists integer n; n >= 0 && \valid(tab[(0..n)]) && 
+  (\forall integer n1, n2; 0 <= n1 < n2 <= n ==> \separated(tab[n1], tab[n2])) && 
+  0 <= i <= n && 0 <= j <= n ==> (tab[i] == tab[j] ==> i == j);
+*/
+
 /*@ requires fp == NULL ==> qp == NULL;
   @ requires bp != NULL && sp != NULL ==> sp != bp;
   @ requires tortoise_hare_k >= 0;
+  @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires valid_list(bp);
   @ requires valid_list(sp);
   @ requires valid_list(fp);
@@ -179,9 +299,18 @@ void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
   lst_t nfp;
   if (fp == qp) {
     //@ ghost back_again_k = tortoise_hare_k;
-    back_again(bp, sp, sp);
+    //@ assert fp == ls.cells[2 * back_again_k];
+    //@ assert qp == ls.cells[2 * back_again_k];
+    //@ assert qp == ls.cells[ls.count];
+    //@ assert 2 * back_again_k == ls.count;
+    back_again(bp, sp, sp); 
   } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
     //@ ghost back_again_k = tortoise_hare_k;
+    //@ assert fp == ls.cells[2 * back_again_k];
+    //@ assert fp->cdr == qp;
+    //@ assert fp->cdr == ls.cells[2 * back_again_k + 1];
+    //@ assert qp == ls.cells[2 * back_again_k + 1];
+    //@ assert 2 * back_again_k + 1 == ls.count;
     back_again(bp, sp, sp->cdr);
   } else {
     //@ assert valid_list(nfp);

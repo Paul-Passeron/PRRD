@@ -97,7 +97,7 @@ predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
   predicate separated_list(lst_t p) =
     \exists integer n; n >= 0 &&
       nth(p, n) == \null &&
-      \forall integer i; i < n ==> \valid(nth(p, i)) &&
+      (\forall integer i; 0<= i < n ==> \valid(nth(p, i))) &&
       separated_list_aux(p, n);
 */
 
