@@ -2,5 +2,11 @@ rapport/article/*
 !rapport/article/*.pdf
 !rapport/article/*.tex
 !rapport/article/Makefile
+
+rapport/projet/*
+!rapport/projet/*.pdf
+!rapport/projet/*.tex
+!rapport/projet/Makefile
+
 src/main
 src/.frama-c/*

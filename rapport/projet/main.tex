@@ -1,0 +1,52 @@
+\documentclass[a4paper, 12pt]{extarticle}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{float}
+\usepackage{hyperref}
+\lstset{language=Caml}
+\definecolor{codered}{rgb}{0.8,0,0}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+
+\lstdefinestyle{caml_style}{
+commentstyle=\color{codegreen},
+keywordstyle=\color{codered},
+stringstyle=\color{codepurple},
+basicstyle=\ttfamily,
+breakatwhitespace=false,
+breaklines=true,
+numberstyle=\tiny\color{codered},
+captionpos=b,
+keepspaces=true,
+showspaces=false,
+showstringspaces=false,
+showtabs=false,
+tabsize=4,
+numbers=left,
+numbersep=10pt
+}
+\lstset{style = caml_style}
+
+
+\title{%
+    Rapport de projet\\
+    \bigskip \large \textit{Implémenter (en C) et prouver (avec Frama-C) les algorithmes décrits dans les sections 3 et 4 de l'article donné en référence}}
+
+\author{Prudence Deteix, Paul Passeron, Jean Rousseau}
+\date{}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\vspace{10em}
+Dépot du projet: \url{https://github.com/Paul-Passeron/PRRD.git}
+
+\newpage
+
+\input{part1.tex}
+
+\end{document}
