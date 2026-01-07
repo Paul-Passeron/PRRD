@@ -68,20 +68,31 @@ void value_reverse(lst_t sp, lst_t qp) {
  */
 
 
+/*@ lemma two_sep_first_elem:
+  \forall lst_t l1, l2, integer n1, n2; 
+    n1 >= 1 && n2 >= 1 &&
+    nth(l1, n1) == \null && nth(l2, n2) == \null &&
+    (\forall integer i, j; 0 <= i < n1 && 0 <= j < n2 ==> \separated(nth(l1, i), nth(l2, j)))
+    ==> \separated(nth(l1, 0), nth(l2, 0));
+*/
+
+/*@ lemma two_sep_first_elem_direct:
+  \forall lst_t l1, l2, integer n1, n2; 
+    n1 >= 1 && n2 >= 1 &&
+    (\forall integer i, j; 0 <= i < n1 && 0 <= j < n2 ==> \separated(nth(l1, i), nth(l2, j)))
+    ==> \separated(l1, l2);
+*/
+
 /*@ lemma nth_zero:
   \forall lst_t l; nth(l, 0) == l;
 */
 
- /*@ lemma two_sep_and_valid_implies_diff:
-  \forall lst_t x, y; two_separated(x, y) && x != \null && y != \null && 
-    valid_list(x) && valid_list(y) ==> \separated(x, y);
- */
 
- /*@ lemma still_separated{L1, L2}:
-    \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
-   valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
-   \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> separated_list{L2}(\at(x, L2));
- */
+/*@ lemma still_separated{L1, L2}:
+  \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&
+  valid_list{L1}(\at(y, L1)) && valid_list{L2}(\at(y, L2)) && \at(y, L1) ==
+  \at(y, L2) && \at(x->cdr, L2) == \at(y, L2) ==> separated_list{L2}(\at(x, L2));
+*/
 
 /*@ lemma still_valid{L1, L2}:
     \forall lst_t x, y; two_separated{L1}(\at(x, L1), \at(y, L1)) && \at(x, L1) == \at(x, L2) && \valid{L2}(x) &&

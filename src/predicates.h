@@ -81,8 +81,10 @@ predicate reversal (ls: list_shape) (m1 m2: mem) (k: int) =
 
 /*@ predicate valid_or_null(lst_t p) = p == NULL || \valid(p); */
 
-/*@ logic lst_t nth(lst_t l, integer n) = 
-    n == 0 || l == NULL  ? l : nth(l->cdr, n-1);
+/*@ logic lst_t nth(lst_t l, integer n) =
+    l == \null ? (lst_t)\null :
+    n == 0 ? l :
+    nth(l->cdr, n-1);
 */
 
 /*@
