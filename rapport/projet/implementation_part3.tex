@@ -1,1 +1,49 @@
+Tout d'abord, il faut implémenter le type de liste chaînées défini par JCF tel que : 
+CODE CAML
+
+On obtient ainsi le fichier \texttt{common.h} : 
+\begin{lstlisting}
+#include <stddef.h>
+
+typedef int elt_t;
+
+struct lst {
+  elt_t car;
+  struct lst *cdr;
+};
+
+typedef struct lst *lst_t;
+\end{lstlisting}
+
+Dans le fichier \texttt{lst.h} dans lequel on inclut les bibliothèques suivantes : 
+
+\begin{lstlisting}
+#include "common.h"
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdio.h>
+\end{lstlisting}
+
+On va, traduire la fonction blable:
+CODE CAML 
+
+Ce qui donne: 
+\begin{lstlisting}
+lst_t aux(lst_t r, lst_t l) {
+	if (!l) {
+		return r;
+  	}
+  	else {
+		lst_t n = l->cdr;
+		l->cdr = r;
+		return aux(l, n);
+  	}
+}
+\end{lstlisting}
+
+\begin{lstlisting}
+lst_t list_reversal(lst_t l) {
+	return aux(NULL, l);
+}
+\end{lstlisting}
 
