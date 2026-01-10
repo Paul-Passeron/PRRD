@@ -114,7 +114,6 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   //@ assert \forall integer i; back_again_k <= i < ls.count ==> ls.cells[i]->cdr == ls.cells[i+1];
 
-  // TODO: This does not pass
   //@ assert listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
 
   //@ assert bp->cdr == sp;
@@ -122,7 +121,14 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   //@ assert sp == ls.cells[back_again_k];
 
   //@ assert listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
+
+ // @ assert nbp != NULL;
+ // @ assert back_again_k - 1 > 0;
+ // @ assert nbp == ls.cells[back_again_k - 2];
+ // @ assert ls.cells[0]->cdr == NULL;
+ // @ assert \forall integer i; 0 < i < back_again_k - 1 ==> ls.cells[i]->cdr == ls.cells[i - 1];
   //@ assert listRL(ls, nbp, back_again_k - 1);
+
   //@ assert valid_list(nbp);
   //@ assert valid_list(sp);
   //@ assert valid_list(bp);
