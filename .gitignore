@@ -10,3 +10,12 @@ rapport/projet/*
 
 src/main
 src/.frama-c/*
+rapport/main.toc
+rapport/main.synctex.gz
+rapport/main.out
+rapport/main.log
+rapport/main.fls
+rapport/main.blg
+rapport/main.fdb_latexmk
+rapport/main.bbl
+rapport/main.aux
