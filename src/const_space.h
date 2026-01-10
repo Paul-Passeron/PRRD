@@ -91,6 +91,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   lst_t nbp = bp->cdr;
 
+
   //@ assert bp == ls.cells[back_again_k - 1];
 
   //@ assert back_again_k - 1 < back_again_k;
@@ -101,9 +102,12 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   //@ assert(two_separated(bp, sp));
   //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(bp, ls.cells[i]);
+  //@ assert \forall integer i; back_again_k <= i < ls.count ==> \separated(nbp, ls.cells[i+1]);
+
+  // This should give us after the assignement two_separated(nbp, bp) but it does not.
+  //@ assert two_separated(nbp, sp);
 
   bp->cdr = sp;
-
   //@ assert bp == ls.cells[back_again_k - 1];
 
   //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 1 < i;
@@ -122,19 +126,20 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   //@ assert listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
 
- // @ assert nbp != NULL;
- // @ assert back_again_k - 1 > 0;
- // @ assert nbp == ls.cells[back_again_k - 2];
- // @ assert ls.cells[0]->cdr == NULL;
- // @ assert \forall integer i; 0 < i < back_again_k - 1 ==> ls.cells[i]->cdr == ls.cells[i - 1];
+  //@ assert nbp != NULL;
+  //@ assert back_again_k - 1 > 0;
+  //@ assert nbp == ls.cells[back_again_k - 2];
+  //@ assert ls.cells[0]->cdr == NULL;
+  //@ assert \forall integer i; 0 < i < back_again_k - 1 ==> ls.cells[i]->cdr == ls.cells[i - 1];
   //@ assert listRL(ls, nbp, back_again_k - 1);
+
+  //@ assert \forall integer i; back_again_k <= i < ls.count ==> \separated(nbp, ls.cells[i+1]);
+
 
   //@ assert valid_list(nbp);
   //@ assert valid_list(sp);
   //@ assert valid_list(bp);
-  //@ ghost back_again_k = back_again_k - 1;
   //@ assert two_separated(nbp, bp);
-  //@ assert back_again_k > 0;
   //@ ghost back_again_k = back_again_k - 1;
 
   back_again(nbp, bp, np->cdr);
