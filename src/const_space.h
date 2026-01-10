@@ -51,9 +51,98 @@ void value_reverse(lst_t sp, lst_t qp) {
     ==> \at(q->cdr, L1) == \at(q->cdr, L2);
 */
 
+/*@ lemma two_separated_cons{L}:
+  \forall lst_t nbp, bp, sp;
+    valid_list{L}(nbp) &&
+    valid_list{L}(bp) &&
+    valid_list{L}(sp) &&
+    \at(bp->cdr, L) == sp &&
+    (\forall integer i; 0 <= i < length{L}(nbp) ==> \separated(nth{L}(nbp, i), bp)) &&
+    two_separated{L}(nbp, sp)
+    ==> two_separated{L}(nbp, bp);
+*/
+
+
+/*@ axiomatic LengthNthRelation {
+
+  axiom length_null:
+    length(\null) == 0;
+
+  axiom length_cons:
+    \forall lst_t l;
+    l != \null ==>
+    length(l) == 1 + length(l->cdr);
+
+  lemma nth_length_base:
+    \forall lst_t l;
+    nth(l, 0) == \null ==>
+    l == \null && length(l) == 0;
+
+  lemma nth_length_inductive:
+    \forall lst_t l, integer n;
+    n >= 0 && l != \null && nth(l->cdr, n) == \null && length(l->cdr) == n ==>
+    nth(l, n+1) == \null && length(l) == n + 1;
+
+  // TODO: THIS IS PROBABLY SO BAD
+
+  axiom nth_length_null:
+    \forall lst_t l, integer n;
+    n >= 0 && nth(l, n) == \null && valid_list(l) && (\forall integer i; 0 <= i < n ==> nth(l, i) != \null ) ==>
+    length(l) == n;
+
+
+    axiom valid_list_has_length:
+        \forall lst_t l;
+        valid_list(l) ==>
+        \exists integer n; n >= 0 && nth(l, n) == \null && length(l) == n;
+}
+
+
+*/
+
+
+/*@ lemma pos_len_means_nonnull:
+    \forall lst_t l; valid_list(l) && length(l) > 0 ==> l != \null;
+*/
+
+/*@ lemma pos_len_means_valid:
+    \forall lst_t l; valid_list(l) && length(l) > 0 ==> \valid(l);
+*/
+
+/*@ lemma sup_one_len_means_cdr_nonnull:
+    \forall lst_t l; valid_list(l) && length(l) > 1 ==> l->cdr != \null;
+*/
+
+/*@ lemma sup_one_len_means_cdr_valid:
+    \forall lst_t l; valid_list(l) && length(l) > 1 ==> \valid(l->cdr);
+*/
+
+/*@ lemma valid_lst_forall:
+ \forall lst_t l; valid_list(l) && l != \null ==> valid_list(nth(l, 1));
+ */
+
+/*@ lemma length_is_always_positive:
+  \forall lst_t l; valid_list(l) ==> length(l) >= 0;
+*/
+
+/*@ lemma length_rel_with_cdr_0:
+ \forall lst_t l; valid_list(l) && l != \null ==> length(l) > 0;
+*/
+
+/*@ lemma length_rel_with_cdr_1:
+ \forall lst_t l; valid_list(l) && l != \null ==> length(l) == length(l->cdr) + 1;
+*/
+
+/*@ lemma valid_nth_range_means_non_null:
+    \forall lst_t l; valid_list(l) && l != \null ==> \forall integer i; 0 <= i < length(l) ==> nth(l, i) != \null;
+*/
+
+/*@ lemma valid_nonnull_lst_implies_separation:
+ \forall lst_t l; valid_list(l) && l != \null ==> \forall integer i, j; 0 <= i < j < length(l) ==> \separated(nth(l, i), nth(l, j));
+ */
+
 /*@ requires \valid(ls.cells[0..ls.count]);
-  @ requires ((bp == NULL || sp == NULL) && back_again_k >= 0) || back_again_k >
-0;
+  @ requires ((bp == NULL || sp == NULL) && back_again_k >= 0) || back_again_k > 0;
   @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires bp != NULL && sp != NULL ==> sp != bp;
   @ requires valid_list(sp);
@@ -89,8 +178,20 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   //@ assert(two_separated(bp, sp));
   /*@ assert valid_list(np); */
 
+  //@ assert valid_list(bp);
+  //@ assert length(bp) == length(bp->cdr) + 1;
+  //@ assert \forall integer i; 0 <= i < length(bp->cdr) ==> nth(bp->cdr, i) == nth(bp, i + 1);
+  //@ assert \forall integer i; 0 <= i < length(bp->cdr) ==> nth(bp->cdr, i) != NULL;
+  //@ assert valid_list(bp) && bp != \null;
+  //@ assert \forall integer i; 0 <= i < length(bp) - 1 ==> \separated(bp, nth(bp, i + 1));
+
+  //@ assert \forall integer i; 0 < i < length(bp) ==> \separated(bp, nth(bp, i));
+
   lst_t nbp = bp->cdr;
 
+  // //@ assert \forall integer i; 0 <= i < length(nbp) ==> \separated(bp, nth(nbp, i));
+
+  //@ assert \forall integer i; 0 < i < length(bp) ==> \separated(bp, nth(bp, i));
 
   //@ assert bp == ls.cells[back_again_k - 1];
 
@@ -135,6 +236,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   //@ assert \forall integer i; back_again_k <= i < ls.count ==> \separated(nbp, ls.cells[i+1]);
 
+  //@ assert \forall integer i; 0 <= i < length(nbp) ==> \separated(bp, nth(nbp, i));
 
   //@ assert valid_list(nbp);
   //@ assert valid_list(sp);

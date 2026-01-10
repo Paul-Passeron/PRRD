@@ -97,27 +97,27 @@
  */
 
 /*@ logic integer length(lst_t l) =
-  l == \null ? 0 : 1 + length(l->cdr); 
+  l == \null ? 0 : 1 + length(l->cdr);
 */
 
 /*@ predicate two_separated(lst_t l1, lst_t l2) =
-  (l1 == \null || l2 == \null) || 
-  nth(l1, length(l1)) == \null && 
+  (l1 == \null || l2 == \null) ||
+  nth(l1, length(l1)) == \null &&
   \forall integer i, j; length(l1) > i >= 0 && length(l2) > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
 */
 
 
 
 // /*@ predicate two_separated(lst_t l1, lst_t l2) =
-//   (l1 == \null || l2 == \null) || 
-//   \exists integer n1, n2; n1 >= 0 && n2 >= 0 && nth(l1, n1) == \null && 
+//   (l1 == \null || l2 == \null) ||
+//   \exists integer n1, n2; n1 >= 0 && n2 >= 0 && nth(l1, n1) == \null &&
 //   \forall integer i, j; n1 > i >= 0 && n2 > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
 // */
 
 /*@ lemma length_of_nonnull_valid:
     \forall lst_t l;
     valid_list(l) && l != \null ==>
-      \exists integer n; n >= 1 && nth(l, n) == \null && 
+      \exists integer n; n >= 1 && nth(l, n) == \null &&
         \forall integer i; 0 <= i < n ==> \valid(nth(l, i));
  */
 
@@ -126,7 +126,7 @@
  */
 
 /*@ lemma two_sep_first_elem:
-  \forall lst_t l1, l2, integer n1, n2; 
+  \forall lst_t l1, l2, integer n1, n2;
     n1 >= 1 && n2 >= 1 &&
     nth(l1, n1) == \null && nth(l2, n2) == \null &&
     (\forall integer i, j; 0 <= i < n1 && 0 <= j < n2 ==> \separated(nth(l1, i), nth(l2, j)))
@@ -134,7 +134,7 @@
 */
 
 /*@ lemma two_sep_first_elem_direct:
-  \forall lst_t l1, l2, integer n1, n2; 
+  \forall lst_t l1, l2, integer n1, n2;
     n1 >= 1 && n2 >= 1 &&
     (\forall integer i, j; 0 <= i < n1 && 0 <= j < n2 ==> \separated(nth(l1, i), nth(l2, j)))
     ==> \separated(l1, l2);
@@ -146,7 +146,7 @@
 
 /*@ lemma nth_cons:
   \forall lst_t x, integer n;
-    \valid(x) && n >= 1 ==> 
+    \valid(x) && n >= 1 ==>
     nth(x, n) == nth(x->cdr, n-1);
 */
 
@@ -178,16 +178,16 @@
 /*@ lemma separated_list_from_two_sep:
   \forall lst_t x, y, integer n;
   \valid(x) && x->cdr == y && n >= 0 &&
-  nth(y, n) == \null && 
-  (\forall integer i; 0 <= i < n ==> \valid(nth(y, i))) && 
-  separated_list_aux(y, n) && 
+  nth(y, n) == \null &&
+  (\forall integer i; 0 <= i < n ==> \valid(nth(y, i))) &&
+  separated_list_aux(y, n) &&
   (\forall integer i; 0 <= i < n ==> \separated(x, nth(y, i)))
   ==> separated_list(x);
 */
 
 /*@ lemma separated_preserved{L1, L2}:
   \forall lst_t a, b;
-    \separated(a, b) && 
+    \separated(a, b) &&
     \valid{L2}(a) && \valid{L2}(b)
     ==> \separated(a, b);
 */
@@ -275,24 +275,24 @@
   \exists integer i; 0 <= i < length(root) && nth(root, i) == p;
 */
 
-/*@ predicate cdrs_did_not_change{L1,L2}(lst_t l) = 
+/*@ predicate cdrs_did_not_change{L1,L2}(lst_t l) =
   valid_list{L1}(l) &&
   valid_list{L2}(l) &&
   length{L1}(l) == length{L2}(l) &&
-  (\forall lst_t p; 
-    reachable{L1}(l, p) && p != \null ==> 
+  (\forall lst_t p;
+    reachable{L1}(l, p) && p != \null ==>
     \at(p->cdr, L1) == \at(p->cdr, L2));
 */
 
-/*@ predicate only_cars_changed{L1,L2}(lst_t *cells, integer count) = 
-  \forall integer i; 0 <= i < count ==> 
+/*@ predicate only_cars_changed{L1,L2}(lst_t *cells, integer count) =
+  \forall integer i; 0 <= i < count ==>
     \at(cells[i]->cdr, L1) == \at(cells[i]->cdr, L2);
 */
 
 
 /*@
     predicate frame_list{L1, L2}(list_shape ls)=
-    only_cars_changed{L1, L2}(ls.cells, ls.count) && 
+    only_cars_changed{L1, L2}(ls.cells, ls.count) &&
         \forall integer i; 0 <= i < ls.count ==> \at(ls.cells[i], L1) &&
    \at(ls.cells[i], L2) &&
         \forall lst_t p; (\forall integer i; 0 <= i < ls.count ==> p !=
