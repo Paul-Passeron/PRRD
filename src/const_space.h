@@ -141,6 +141,18 @@ void value_reverse(lst_t sp, lst_t qp) {
  \forall lst_t l; valid_list(l) && l != \null ==> \forall integer i, j; 0 <= i < j < length(l) ==> \separated(nth(l, i), nth(l, j));
  */
 
+ /*@ lemma listRL_nth_is_cells:
+     \forall list_shape ls, lst_t p, integer k, i;
+     listRL(ls, p, k) && 0 <= i < k ==>
+     nth(p, i) == ls.cells[k - 1 - i];
+ */
+
+ /*@ lemma listLR_nth_is_cells:
+     \forall list_shape ls, lst_t p, integer lo, hi, lst_t q, integer i;
+     listLR(ls, p, lo, hi, q) && 0 <= i < hi - lo ==>
+     nth(p, i) == ls.cells[lo + i];
+ */
+
 /*@ requires \valid(ls.cells[0..ls.count]);
   @ requires ((bp == NULL || sp == NULL) && back_again_k >= 0) || back_again_k > 0;
   @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
@@ -189,25 +201,39 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
 
   lst_t nbp = bp->cdr;
 
-  // //@ assert \forall integer i; 0 <= i < length(nbp) ==> \separated(bp, nth(nbp, i));
+  //@ assert back_again_k > 0;
+  //@ assert back_again_k >= 1;
 
   //@ assert \forall integer i; 0 < i < length(bp) ==> \separated(bp, nth(bp, i));
 
   //@ assert bp == ls.cells[back_again_k - 1];
 
+  //@ assert back_again_k - 1 > 0 ==> ls.cells[back_again_k - 1]->cdr == ls.cells[back_again_k - 2];
+  //@ assert back_again_k - 1 > 0 ==> bp->cdr == ls.cells[back_again_k - 2];
+  //@ assert back_again_k - 1 > 0 ==> nbp == ls.cells[back_again_k - 2];
+
   //@ assert back_again_k - 1 < back_again_k;
+  //@ assert back_again_k - 2 < back_again_k - 1;
 
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 2 < i;
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 2 != i;
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(ls.cells[back_again_k - 2], ls.cells[i]);
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> nbp == ls.cells[back_again_k - 2] ==> \separated(nbp, ls.cells[i]);
+
+  //@ assert bp == ls.cells[back_again_k - 1];
+  //@ assert back_again_k - 1 < back_again_k;
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 1 < i;
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 1 != i;
+
+  // Utiliser la séparation pour déduire l'inégalité des pointeurs
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(ls.cells[back_again_k - 1], ls.cells[i]);
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> ls.cells[back_again_k - 1] != ls.cells[i];
   //@ assert \forall integer i; back_again_k <= i <= ls.count ==> bp != ls.cells[i];
-
-  //@ assert \forall integer i; back_again_k <= i < ls.count ==> ls.cells[i]->cdr == ls.cells[i+1];
-
-  //@ assert(two_separated(bp, sp));
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(bp, ls.cells[i]);
+  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(nbp, ls.cells[i]);
   //@ assert \forall integer i; back_again_k <= i < ls.count ==> \separated(nbp, ls.cells[i+1]);
 
-  // This should give us after the assignement two_separated(nbp, bp) but it does not.
+  //@ assert sp == ls.cells[back_again_k];
   //@ assert two_separated(nbp, sp);
-
   bp->cdr = sp;
   //@ assert bp == ls.cells[back_again_k - 1];
 
