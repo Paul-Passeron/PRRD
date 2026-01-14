@@ -100,6 +100,17 @@ void value_reverse(lst_t sp, lst_t qp) {
 
 */
 
+/*@ lemma two_separated_from_listRL_listLR:
+    \forall list_shape ls, lst_t bp, sp, integer k;
+    listRL(ls, bp, k) &&
+    listLR(ls, sp, k, ls.count, ls.cells[ls.count]) &&
+    k > 0 &&
+    (\forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j])) &&
+    bp != NULL &&
+    bp->cdr != NULL
+    ==> two_separated(bp->cdr, sp);
+*/
+
 
 /*@ lemma pos_len_means_nonnull:
     \forall lst_t l; valid_list(l) && length(l) > 0 ==> l != \null;
@@ -153,6 +164,20 @@ void value_reverse(lst_t sp, lst_t qp) {
      nth(p, i) == ls.cells[lo + i];
  */
 
+ /*@ lemma separated_implies_neq:
+     \forall lst_t p, q; \separated(p, q) ==> p != q;
+ */
+
+ /*@ lemma separation_instantiation:
+     \forall lst_t *cells, integer n, k, j;
+     n >= 0 &&
+     k >= 2 &&
+     k <= n &&
+     k <= j <= n &&
+     (\forall integer i1, i2; 0 <= i1 < i2 <= n ==> \separated(cells[i1], cells[i2]))
+     ==> \separated(cells[k-2], cells[j]);
+ */
+
 /*@ requires \valid(ls.cells[0..ls.count]);
   @ requires ((bp == NULL || sp == NULL) && back_again_k >= 0) || back_again_k > 0;
   @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
@@ -162,8 +187,7 @@ void value_reverse(lst_t sp, lst_t qp) {
   @ requires valid_list(np);
   @ requires two_separated(bp, sp);
   @ requires ls.count < 10E5;
-  @ requires listLR(ls, sp, back_again_k, ls.count,
-ls.cells[ls.count]);
+  @ requires listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
   @ requires listRL(ls, bp, back_again_k);
   @ requires back_again_k <= ls.count - back_again_k;
   @ requires ls.cells[ls.count - back_again_k] == np;
@@ -171,8 +195,7 @@ ls.cells[ls.count]);
   @ decreases back_again_k;
   @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
   @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
-  @ ensures listLR(ls, ls.cells[0], (int)0,
-(int)(ls.count), ls.cells[ls.count]);
+  @ ensures listLR(ls, ls.cells[0], (int)0, (int)(ls.count), ls.cells[ls.count]);
   @ ensures reversal{Old, Post}(ls, (int)0);
   @ ensures frame_list{Old, Post}(ls);
   @ ensures back_again_k >= 0;
@@ -190,80 +213,59 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   //@ assert(two_separated(bp, sp));
   /*@ assert valid_list(np); */
 
+  //@ assert two_separated(bp, sp);
   //@ assert valid_list(bp);
-  //@ assert length(bp) == length(bp->cdr) + 1;
-  //@ assert \forall integer i; 0 <= i < length(bp->cdr) ==> nth(bp->cdr, i) == nth(bp, i + 1);
-  //@ assert \forall integer i; 0 <= i < length(bp->cdr) ==> nth(bp->cdr, i) != NULL;
-  //@ assert valid_list(bp) && bp != \null;
-  //@ assert \forall integer i; 0 <= i < length(bp) - 1 ==> \separated(bp, nth(bp, i + 1));
-
-  //@ assert \forall integer i; 0 < i < length(bp) ==> \separated(bp, nth(bp, i));
+  //@ assert valid_list(np);
+  //@ assert back_again_k > 0;
+  //@ assert bp == ls.cells[back_again_k - 1];
 
   lst_t nbp = bp->cdr;
 
-  //@ assert back_again_k > 0;
-  //@ assert back_again_k >= 1;
+   /*@ ghost
+     if (back_again_k == 1) {
+       //@ assert bp == ls.cells[0];
+       //@ assert ls.cells[0]->cdr == \null;
+       //@ assert nbp == \null;
+     } else {
+       //@ ghost int idx_nbp = back_again_k - 2;
 
-  //@ assert \forall integer i; 0 < i < length(bp) ==> \separated(bp, nth(bp, i));
+       //@ assert back_again_k >= 2;
+       //@ assert idx_nbp >= 0;
+       //@ assert ls.cells[back_again_k - 1]->cdr == ls.cells[idx_nbp];
+       //@ assert nbp == ls.cells[idx_nbp];
 
-  //@ assert bp == ls.cells[back_again_k - 1];
+       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> idx_nbp < j;
+       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> 0 <= idx_nbp < j <= ls.count;
+       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> \separated(ls.cells[idx_nbp], ls.cells[j]);
+       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> \separated(nbp, ls.cells[j]);
+     }
+   */
 
-  //@ assert back_again_k - 1 > 0 ==> ls.cells[back_again_k - 1]->cdr == ls.cells[back_again_k - 2];
-  //@ assert back_again_k - 1 > 0 ==> bp->cdr == ls.cells[back_again_k - 2];
-  //@ assert back_again_k - 1 > 0 ==> nbp == ls.cells[back_again_k - 2];
+  // nbp separation from ls.cells[back_again_k..]
+  //@ assert nbp == \null || \forall integer j; back_again_k <= j <= ls.count ==> \separated(nbp, ls.cells[j]);
 
-  //@ assert back_again_k - 1 < back_again_k;
-  //@ assert back_again_k - 2 < back_again_k - 1;
-
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 2 < i;
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 2 != i;
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(ls.cells[back_again_k - 2], ls.cells[i]);
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> nbp == ls.cells[back_again_k - 2] ==> \separated(nbp, ls.cells[i]);
-
-  //@ assert bp == ls.cells[back_again_k - 1];
-  //@ assert back_again_k - 1 < back_again_k;
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 1 < i;
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 1 != i;
-
-  // Utiliser la séparation pour déduire l'inégalité des pointeurs
+  // bp separation from ls.cells[back_again_k..]
   //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(ls.cells[back_again_k - 1], ls.cells[i]);
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> ls.cells[back_again_k - 1] != ls.cells[i];
   //@ assert \forall integer i; back_again_k <= i <= ls.count ==> bp != ls.cells[i];
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(nbp, ls.cells[i]);
-  //@ assert \forall integer i; back_again_k <= i < ls.count ==> \separated(nbp, ls.cells[i+1]);
 
+  // two_separated(nbp, sp)
   //@ assert sp == ls.cells[back_again_k];
+  //@ assert \forall integer i, j; 0 <= i <= back_again_k - 2 && back_again_k <= j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   //@ assert two_separated(nbp, sp);
+
   bp->cdr = sp;
   //@ assert bp == ls.cells[back_again_k - 1];
 
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> back_again_k - 1 < i;
-
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(ls.cells[back_again_k - 1], ls.cells[i]);
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(bp, ls.cells[i]);
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> bp != ls.cells[i];
-
   //@ assert \forall integer i; back_again_k <= i < ls.count ==> ls.cells[i]->cdr == ls.cells[i+1];
-
   //@ assert listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
 
-  //@ assert bp->cdr == sp;
-  //@ assert bp == ls.cells[back_again_k - 1];
-  //@ assert sp == ls.cells[back_again_k];
-
-  //@ assert listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
-
-  //@ assert nbp != NULL;
-  //@ assert back_again_k - 1 > 0;
-  //@ assert nbp == ls.cells[back_again_k - 2];
+  // Verify listRL for nbp
+  //@ assert back_again_k > 1 ==> nbp == ls.cells[back_again_k - 2];
   //@ assert ls.cells[0]->cdr == NULL;
   //@ assert \forall integer i; 0 < i < back_again_k - 1 ==> ls.cells[i]->cdr == ls.cells[i - 1];
   //@ assert listRL(ls, nbp, back_again_k - 1);
 
-  //@ assert \forall integer i; back_again_k <= i < ls.count ==> \separated(nbp, ls.cells[i+1]);
-
-  //@ assert \forall integer i; 0 <= i < length(nbp) ==> \separated(bp, nth(nbp, i));
-
+  // Verify two_separated(nbp, bp)
   //@ assert valid_list(nbp);
   //@ assert valid_list(sp);
   //@ assert valid_list(bp);
