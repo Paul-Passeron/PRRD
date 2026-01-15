@@ -1,0 +1,63 @@
+Pour prouver plus facilement la correction des fonctions de l'algorithme de morris, 
+on a commencé par redefinir un type d'arbre à "plat".
+On a donc défini le type tree_shape_t : 
+
+typedef struct tree_shape_t {
+    tree_t *cell; //tree node
+    int *lchd; // left child
+    int *rchd; // right child
+    int *lmdt; // leftmost descendant
+    int *rmdt; // rightmost descendant
+    int size;
+}tree_shape_t;
+
+
+On obtient donc un tableau de taille 6 * le nombre de noeud de l'arbre, et pour chaque noeud
+son noeud (pour relier à la forme défini avant), son enfant gauche et droit, 
+son enfant le plus à gauche et le plus a droit et enfin la taille de l'arbre.
+
+De plus nous avons définis des variables ghost :
+ghost tree_shape_t morris_t : arbre "plat"
+ghost int morris_r indice du noeud à la racine
+ghost int morris_c nombre de noeuds deja visités
+ghost int morris_k indice du noeud courant
+ghost int warp_j indice du noeud courant dans warp (recherche du noeud le plus à droite du 
+sous arbre gauche)
+
+ghost struct tree *trace[MAX_NODES] : tableau contenant les noeuds deja visités
+
+Ces variables ghost vont nous aider à écrire les contrats de fonction et donc prouver les fonctions.
+
+Après avoir défini ce type nous avons traduit l'ensemble des prédicats donnés en why3 par l'article.
+Ces prédicats nous serviront ensuite à remplir les contrats de fonction.
+On trouve donc les prédicats wf_lst et wf_rst qui garantissent que les sous-arbre gauche et droit :
+commencent bien juste après i, sont contigus dans le tableau, et correspondent bien au pointeur left et right respectivement.
+On a aussi le prédicat warped_rst qui décrit l'arbre comme valide mais dont les pointeurs droits peuvent 
+être modifiés.
+Puis le prédicat frame_tree qui indique que seul l'arbre qui lui ait passé en argument sera modifié.
+Enfin nous avons le prédicat valid_tree qui ressemble à valid_list qui confirme que l'arbre est valid 
+(donc le noeud courant et ses sous arbres).
+
+Après cela, nous avons traduits l'ensemble des contrats de fonctions pour les 4 fonctions
+(warp, morris_visit, traversak, visit).
+Pour chaque fonction nous avons les requires, assigns, ensures et parfois des variants de boucles : decreases.
+
+Une fois les contrats de fonctions réalisés, nous avons réalisé que les buts étaient trop compliqué
+pour le prouveur.
+De plus les fonctions étant récursives les contrats de fonctions doivent être vérifiés à plusieurs reprises.
+Pour essayer de simplifier ces preuves, on a donc ajouter des asserts dans les fonctions.
+Ces assert rajoutent des goals plus facilent à démontrer et aident à montrer les requires du prochain appel
+à une fonction.
+Un
+
+
+\subsection{Preuves graphes}
+
+à dire :
+- définir les variables ghost (expliquer toutes les variables)
+- traduire les prédicats
+- traduire les requires assigns et ensure
+- difficile de montrer les assigns : le prouveur doit montrer que seulement ca change et rien d'autres
+- fonctions recursives donc montrer les requires et ensures a chaque fois -> long et fastidieux
+- donc j'ai mis des asserts dans les fonctions 
+- lien difficiles à faire comme la taille de l'arbre et la liste qui contient les noeuds visités

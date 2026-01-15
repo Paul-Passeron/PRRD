@@ -114,7 +114,8 @@ void visit(tree_t p) {
 @ requires wf_lst(morris_t, 0, morris_t.size);
 @ requires \forall integer i; 0 <= i < morris_c ==> trace[i] == morris_t.cell[i];
 @ requires morris_c < morris_k ==> (morris_c == morris_t.lmdt[morris_k] && wf_rst(morris_t, 0, morris_k));
-@ requires (morris_c == morris_k && morris_t.lchd[morris_k] < morris_k) ==>  (wf_rst(morris_t, 0, morris_k-1) && morris_t.cell[morris_k-1]->right == p);
+@ requires (morris_c == morris_k && morris_t.lchd[morris_k] < morris_k) 
+==> (wf_rst(morris_t, 0, morris_k-1) && morris_t.cell[morris_k-1]->right == p);
 @ requires (morris_c == morris_k && morris_t.lchd[morris_k] == morris_k) ==> wf_rst(morris_t, 0, morris_k);
 @ requires warped_rst(morris_t, morris_k, morris_t.size);
 @ requires morris_t.size <= MAX_NODES;
