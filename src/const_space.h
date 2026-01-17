@@ -54,17 +54,16 @@ void value_reverse(lst_t sp, lst_t qp)
 void value_reverse(lst_t sp, lst_t qp)
  /*@ ghost (list_shape ls) */
 {
-
   tortoise_hare(NULL, sp, sp, qp) /*@ ghost (ls, 0) */;
 }
 
-/*@ lemma separated_preserves_cdr{L1,L2}:
-  \forall lst_t p, q;
-    \separated(\at(p, L1), \at(q, L1)) &&
-    \valid{L1}(\at(p, L1)) && \valid{L1}(\at(q, L1)) &&
-    \valid{L2}(\at(p, L2)) && \valid{L2}(\at(q, L2))
-    ==> \at(q->cdr, L1) == \at(q->cdr, L2);
-*/
+// /*@ lemma separated_preserves_cdr{L1,L2}:
+//   \forall lst_t p, q;
+//     \separated(\at(p, L1), \at(q, L1)) &&
+//     \valid{L1}(\at(p, L1)) && \valid{L1}(\at(q, L1)) &&
+//     \valid{L2}(\at(p, L2)) && \valid{L2}(\at(q, L2))
+//     ==> \at(q->cdr, L1) == \at(q->cdr, L2);
+// */
 
 /*@ lemma two_separated_cons{L}:
   \forall lst_t nbp, bp, sp;
@@ -115,16 +114,16 @@ void value_reverse(lst_t sp, lst_t qp)
 
 */
 
-/*@ lemma two_separated_from_listRL_listLR:
-    \forall list_shape ls, lst_t bp, sp, integer k;
-    listRL(ls, bp, k) &&
-    listLR(ls, sp, k, ls.count, ls.cells[ls.count]) &&
-    k > 0 &&
-    (\forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j])) &&
-    bp != NULL &&
-    bp->cdr != NULL
-    ==> two_separated(bp->cdr, sp);
-*/
+// /*@ lemma two_separated_from_listRL_listLR:
+//     \forall list_shape ls, lst_t bp, sp, integer k;
+//     listRL(ls, bp, k) &&
+//     listLR(ls, sp, k, ls.count, ls.cells[ls.count]) &&
+//     k > 0 &&
+//     (\forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j])) &&
+//     bp != NULL &&
+//     bp->cdr != NULL
+//     ==> two_separated(bp->cdr, sp);
+// */
 
 
 /*@ lemma pos_len_means_nonnull:
@@ -160,28 +159,30 @@ void value_reverse(lst_t sp, lst_t qp)
 */
 
 /*@ lemma valid_nth_range_means_non_null:
-    \forall lst_t l; valid_list(l) && l != \null ==> \forall integer i; 0 <= i < length(l) ==> nth(l, i) != \null;
+    \forall lst_t l; valid_list(l) && \valid(l) ==>
+        \forall integer i; 0 <= i < length(l) ==>
+            \valid(nth(l, i));
 */
 
 /*@ lemma valid_nonnull_lst_implies_separation:
  \forall lst_t l; valid_list(l) && l != \null ==> \forall integer i, j; 0 <= i < j < length(l) ==> \separated(nth(l, i), nth(l, j));
  */
 
- /*@ lemma listRL_nth_is_cells:
-     \forall list_shape ls, lst_t p, integer k, i;
-     listRL(ls, p, k) && 0 <= i < k ==>
-     nth(p, i) == ls.cells[k - 1 - i];
- */
+ // /*@ lemma listRL_nth_is_cells:
+ //     \forall list_shape ls, lst_t p, integer k, i;
+ //     listRL(ls, p, k) && 0 <= i < k ==>
+ //     nth(p, i) == ls.cells[k - 1 - i];
+ // */
 
- /*@ lemma listLR_nth_is_cells:
-     \forall list_shape ls, lst_t p, integer lo, hi, lst_t q, integer i;
-     listLR(ls, p, lo, hi, q) && 0 <= i < hi - lo ==>
-     nth(p, i) == ls.cells[lo + i];
- */
+ // /*@ lemma listLR_nth_is_cells:
+ //     \forall list_shape ls, lst_t p, integer lo, hi, lst_t q, integer i;
+ //     listLR(ls, p, lo, hi, q) && 0 <= i < hi - lo ==>
+ //     nth(p, i) == ls.cells[lo + i];
+ // */
 
- /*@ lemma separated_implies_neq:
-     \forall lst_t p, q; \separated(p, q) ==> p != q;
- */
+ // /*@ lemma separated_implies_neq:
+ //     \forall lst_t p, q; \separated(p, q) ==> p != q;
+ // */
 
  /*@ lemma separation_instantiation:
      \forall lst_t *cells, integer n, k, j;
@@ -295,7 +296,9 @@ void back_again(lst_t bp, lst_t sp, lst_t np)
   back_again(nbp, bp, np->cdr) /*@ ghost (ls, k-1) */;
 }
 
-
+/*@ lemma in_ls_not_end_means_valid:
+    \forall list_shape ls, lst_t l; valid_ls(ls) && valid_list(l) && in_ls(ls, l) && l != ls.cells[ls.count] ==> \valid(l) && valid_list(l);
+*/
 
 /*@ lemma valid_ls_means_all_sep_from_cdr:
     \forall list_shape ls; valid_ls(ls) ==> \forall integer i; 0 <= i < ls.count ==> \separated(ls.cells[i], ls.cells[i]->cdr);
@@ -317,6 +320,10 @@ void back_again(lst_t bp, lst_t sp, lst_t np)
  ));
  */
 
+ /*@ lemma all_nth_are_valid_if_not_end:
+    \forall list_shape ls, lst_t l; valid_ls(ls) && in_ls(ls, l) && \exists integer n; 0 <= n < ls.count ==> \forall integer i; 1 <= i < length(l) ==> \valid(nth(l, i)) && in_ls(ls, nth(l, i));
+ */
+
 /*@ requires qp == \null || \exists integer i; 0 <= i < length(fp) ==> qp == nth(fp, i);
   @ requires fp == \null ==> qp == \null;
   @ requires \valid(fp) && \valid(fp->cdr) && fp->cdr != qp ==> valid_list(fp->cdr->cdr);
@@ -332,7 +339,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np)
   @ requires listLR(ls, sp, k, ls.count, qp);
   @ requires listRL(ls, bp, k);
   @ requires 2 * k <= ls.count;
-  @ requires ls.cells[2*k] == fp;
+  @ requires ls.cells[2 * k] == fp;
   @ decreases ls.count - k;
   @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
   @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
@@ -356,42 +363,55 @@ void tortoise_hare(
     //@ assert fp == ls.cells[2 * k];
     //@ assert 2 * k == ls.count;
     back_again(bp, sp, sp) /*@ ghost(ls, k) */;
-  } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
-    //@ assert qp == ls.cells[ls.count];
-    //@ assert fp == ls.cells[2 * k];
-    //@ assert fp->cdr == qp;
-    //@ assert in_ls(ls, fp->cdr);
-    //@ assert fp->cdr == ls.cells[2 * k + 1];
-    //@ assert qp == ls.cells[2 * k + 1];
-    //@ assert 2 * k + 1 == ls.count;
-    back_again(bp, sp, sp->cdr) /*@ ghost (ls, k) */;
   } else {
-    //@ assert valid_list(fp);
-    //@ assert \valid(fp);
-    //@ assert valid_list(fp->cdr);
-    nfp = fp->cdr->cdr;
-    //@ assert valid_list(nfp);
-    lst_t nsp = sp->cdr;
-    //@ assert valid_list(nsp);
-    //@ assert valid_list(bp);
-    sp->cdr = bp;
-    //@ assert \valid(sp);
-    //@ assert valid_list(sp->cdr);
-    //@ assert \forall integer i; 0 <= i < length(sp->cdr) ==> \separated(sp, sp->cdr);
-    //@ assert valid_list(sp);
+      nfp = fp->cdr;
+      if (sp && fp && nfp == qp) {
+        //@ assert qp == ls.cells[ls.count];
+        //@ assert fp == ls.cells[2 * k];
+        //@ assert fp->cdr == qp;
+        //@ assert in_ls(ls, fp->cdr);
+        //@ assert fp->cdr == ls.cells[2 * k + 1];
+        //@ assert qp == ls.cells[2 * k + 1];
+        //@ assert 2 * k + 1 == ls.count;
+        back_again(bp, sp, sp->cdr) /*@ ghost (ls, k) */;
+    } else {
+        //@ assert valid_list(fp);
+        //@ assert \valid(fp);
+        //@ assert in_ls(ls, fp->cdr);
+        //@ assert fp->cdr != qp;
+        //@ assert qp == ls.cells[ls.count];
+        //@ assert fp->cdr != ls.cells[ls.count];
+        //@ assert valid_list(fp->cdr);
+        //@ assert \valid(fp->cdr);
+        nfp = fp->cdr->cdr;
+        //@ assert valid_list(nfp);
+        lst_t nsp = sp->cdr;
+        //@ assert valid_list(nsp);
+        //@ assert valid_list(bp);
+        //@ assert two_separated(bp, sp);
+        //@ assert sp != \null;
+        sp->cdr = bp;
+        //@ assert \valid(sp);
+        //@ assert \forall integer i; 0 <= i < length(sp->cdr) ==> \separated(sp, sp->cdr);
+        //@ assert valid_list(sp->cdr);
+        //@ assert valid_list(sp);
 
-    // Requirements from tortoise_hare call
+        // Requirements from tortoise_hare call
 
-    //@ assert valid_list(nsp);
-    //@ assert valid_list(nfp);
-    //@ assert valid_list(qp);
-    //@ assert two_separated(sp, nsp);
-    //@ assert \valid(*(ls.cells + (0 .. ls.count)));
-    //@ assert listLR(ls, nsp, (int)(k + 1), ls.count, qp);
-    //@ assert listRL(ls, sp, (int)(k + 1));
-    //@ assert *(ls.cells + 2 * (int)(k + 1)) == nfp;
+        //@ assert valid_list(nsp);
+        //@ assert valid_list(nfp);
+        //@ assert valid_list(qp);
 
-    tortoise_hare(sp, nsp, nfp, qp) /*@ ghost (ls, k + 1) */;
+        //@ assert \separated(bp, nsp);
+        //@ assert two_separated(sp, nsp);
+
+        //@ assert valid_ls(ls);
+        //@ assert listLR(ls, nsp, (int)(k + 1), ls.count, qp);
+        //@ assert listRL(ls, sp, (int)(k + 1));
+        //@ assert *(ls.cells + 2 * (int)(k + 1)) == nfp;
+
+        tortoise_hare(sp, nsp, nfp, qp) /*@ ghost (ls, k + 1) */;
+    }
   }
 }
 

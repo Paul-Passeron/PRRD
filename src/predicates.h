@@ -43,8 +43,9 @@
         (k == 0 && p == NULL) ||
         (
             0 < k <= ls.count && p == ls.cells[k - 1] &&
-            ls.cells[0]->cdr == NULL &&
-            \forall integer i; 0 < i < k ==> ls.cells[i]->cdr == ls.cells[i - 1]
+            ls.cells[0]->cdr == \null &&
+            \valid(ls.cells[0]) &&
+            \forall integer i; 0 < i < k ==> ls.cells[i]->cdr == ls.cells[i - 1] && \valid(ls.cells[i])
         );
  */
 
@@ -102,7 +103,6 @@
 
 /*@ predicate two_separated(lst_t l1, lst_t l2) =
   (l1 == \null || l2 == \null) ||
-  nth(l1, length(l1)) == \null &&
   \forall integer i, j; length(l1) > i >= 0 && length(l2) > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
 */
 
