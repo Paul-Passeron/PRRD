@@ -193,12 +193,19 @@ void value_reverse(lst_t sp, lst_t qp)
      ==> \separated(cells[k-2], cells[j]);
  */
 
+ /*@ predicate in_ls(list_shape ls, lst_t l) =
+     valid_ls(ls) &&
+     valid_list(l) &&
+     \exists integer i; 0 <= i <= ls.count ==>
+         l == ls.cells[i];
+ */
+
 /*@ requires ((bp == NULL || sp == NULL) && k >= 0) || k > 0;
   @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires bp != NULL && sp != NULL ==> sp != bp;
-  @ requires valid_list(sp);
-  @ requires valid_list(bp);
-  @ requires valid_list(np);
+  @ requires in_ls(ls, sp);
+  @ requires in_ls(ls, bp);
+  @ requires in_ls(ls, np);
   @ requires two_separated(bp, sp);
   @ requires ls.count < 10E5;
   @ requires listLR(ls, sp, k, ls.count, ls.cells[ls.count]);
@@ -288,12 +295,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np)
   back_again(nbp, bp, np->cdr) /*@ ghost (ls, k-1) */;
 }
 
-/*@ predicate in_ls(list_shape ls, lst_t l) =
-    valid_ls(ls) &&
-    valid_list(l) &&
-    \exists integer i; 0 <= i <= ls.count ==>
-        l == ls.cells[i];
-*/
+
 
 /*@ lemma valid_ls_means_all_sep_from_cdr:
     \forall list_shape ls; valid_ls(ls) ==> \forall integer i; 0 <= i < ls.count ==> \separated(ls.cells[i], ls.cells[i]->cdr);
@@ -348,13 +350,14 @@ void tortoise_hare(
 {
   lst_t nfp;
   if (fp == qp) {
-    //@ assert in_ls(ls, fp);
-    //@ assert fp == ls.cells[2 * k];
-    //@ assert qp == ls.cells[2 * k];
     //@ assert qp == ls.cells[ls.count];
+    //@ assert in_ls(ls, fp);
+    //@ assert in_ls(ls, qp);
+    //@ assert fp == ls.cells[2 * k];
     //@ assert 2 * k == ls.count;
     back_again(bp, sp, sp) /*@ ghost(ls, k) */;
   } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
+    //@ assert qp == ls.cells[ls.count];
     //@ assert fp == ls.cells[2 * k];
     //@ assert fp->cdr == qp;
     //@ assert in_ls(ls, fp->cdr);
@@ -363,8 +366,9 @@ void tortoise_hare(
     //@ assert 2 * k + 1 == ls.count;
     back_again(bp, sp, sp->cdr) /*@ ghost (ls, k) */;
   } else {
-    //@ assert valid_list(nfp);
-    //@ assert valid_list(nfp->cdr);
+    //@ assert valid_list(fp);
+    //@ assert \valid(fp);
+    //@ assert valid_list(fp->cdr);
     nfp = fp->cdr->cdr;
     //@ assert valid_list(nfp);
     lst_t nsp = sp->cdr;
