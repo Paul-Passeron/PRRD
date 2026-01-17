@@ -290,16 +290,16 @@
 */
 
 
-/*@
-    predicate frame_list{L1, L2}(list_shape ls)=
-    only_cars_changed{L1, L2}(ls.cells, ls.count) &&
-        \forall integer i; 0 <= i < ls.count ==> \at(ls.cells[i], L1) &&
-   \at(ls.cells[i], L2) &&
-        \forall lst_t p; (\forall integer i; 0 <= i < ls.count ==> p !=
-            \at(ls.cells[i], L1)) ==>
-                \at(p->car, L1) == \at(p->car, L2) &&
-                \at(p->cdr, L1) == \at(p->cdr, L2);
- */
+// /*@
+//     predicate frame_list{L1, L2}(list_shape ls)=
+//     only_cars_changed{L1, L2}(ls.cells, ls.count) &&
+//         \forall integer i; 0 <= i < ls.count ==> \valid{L1}(\at(ls.cells[i], L1)) &&
+//    \at(ls.cells[i], L2) &&
+//         \forall lst_t p; (\forall integer i; 0 <= i < ls.count ==> p !=
+//             \at(ls.cells[i], L1)) ==>
+//                 \at(p->car, L1) == \at(p->car, L2) &&
+//                 \at(p->cdr, L1) == \at(p->cdr, L2);
+//  */
 
 /*
 (** the contents of the `car` fields in ls[k..size-k[ have been swapped *)
