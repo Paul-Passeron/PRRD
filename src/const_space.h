@@ -3,17 +3,18 @@
 #include "common.h"
 #include "lst.h"
 
-void back_again(lst_t bp, lst_t sp, lst_t np);
-void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp);
+void back_again(lst_t bp, lst_t sp, lst_t np)
+/*@ ghost (int k) */
+;
+void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp)
+/*@ ghost (int k) */
+;
 void value_reverse(lst_t sp, lst_t qp);
 
 #ifdef CONST_SPACE_IMPL
 #include "predicates.h"
 
 //@ ghost list_shape ls;
-//@ ghost int tortoise_hare_k;
-//@ ghost int back_again_k;
-
 
 
 /*@ requires qp == NULL || \exists int i; 0 <= i < ls.count ==>
@@ -39,8 +40,7 @@ void value_reverse(lst_t sp, lst_t qp);
  */
 void value_reverse(lst_t sp, lst_t qp) {
 
-  //@ ghost tortoise_hare_k = 0;
-  tortoise_hare(NULL, sp, sp, qp);
+  tortoise_hare(NULL, sp, sp, qp) /*@ ghost (0) */;
 }
 
 /*@ lemma separated_preserves_cdr{L1,L2}:
@@ -179,7 +179,7 @@ void value_reverse(lst_t sp, lst_t qp) {
  */
 
 /*@ requires \valid(ls.cells[0..ls.count]);
-  @ requires ((bp == NULL || sp == NULL) && back_again_k >= 0) || back_again_k > 0;
+  @ requires ((bp == NULL || sp == NULL) && k >= 0) || k > 0;
   @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires bp != NULL && sp != NULL ==> sp != bp;
   @ requires valid_list(sp);
@@ -187,20 +187,21 @@ void value_reverse(lst_t sp, lst_t qp) {
   @ requires valid_list(np);
   @ requires two_separated(bp, sp);
   @ requires ls.count < 10E5;
-  @ requires listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
-  @ requires listRL(ls, bp, back_again_k);
-  @ requires back_again_k <= ls.count - back_again_k;
-  @ requires ls.cells[ls.count - back_again_k] == np;
+  @ requires listLR(ls, sp, k, ls.count, ls.cells[ls.count]);
+  @ requires listRL(ls, bp, k);
+  @ requires k <= ls.count - k;
+  @ requires ls.cells[ls.count - k] == np;
   @ requires \valid(ls.cells[0..ls.count]);
-  @ decreases back_again_k;
+  @ decreases k;
   @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
   @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
   @ ensures listLR(ls, ls.cells[0], (int)0, (int)(ls.count), ls.cells[ls.count]);
   @ ensures reversal{Old, Post}(ls, (int)0);
   @ ensures frame_list{Old, Post}(ls);
-  @ ensures back_again_k >= 0;
 */
-void back_again(lst_t bp, lst_t sp, lst_t np) {
+void back_again(lst_t bp, lst_t sp, lst_t np)
+/*@ ghost (int k) */
+{
 
   if (bp == NULL || np == NULL)
     return;
@@ -216,63 +217,62 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   //@ assert two_separated(bp, sp);
   //@ assert valid_list(bp);
   //@ assert valid_list(np);
-  //@ assert back_again_k > 0;
-  //@ assert bp == ls.cells[back_again_k - 1];
+  //@ assert k > 0;
+  //@ assert bp == ls.cells[k - 1];
 
   lst_t nbp = bp->cdr;
 
    /*@ ghost
-     if (back_again_k == 1) {
+     if (k == 1) {
        //@ assert bp == ls.cells[0];
        //@ assert ls.cells[0]->cdr == \null;
        //@ assert nbp == \null;
      } else {
-       //@ ghost int idx_nbp = back_again_k - 2;
+       //@ ghost int idx_nbp = k - 2;
 
-       //@ assert back_again_k >= 2;
+       //@ assert k >= 2;
        //@ assert idx_nbp >= 0;
-       //@ assert ls.cells[back_again_k - 1]->cdr == ls.cells[idx_nbp];
+       //@ assert ls.cells[k - 1]->cdr == ls.cells[idx_nbp];
        //@ assert nbp == ls.cells[idx_nbp];
 
-       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> idx_nbp < j;
-       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> 0 <= idx_nbp < j <= ls.count;
-       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> \separated(ls.cells[idx_nbp], ls.cells[j]);
-       //@ assert \forall integer j; back_again_k <= j <= ls.count ==> \separated(nbp, ls.cells[j]);
+       //@ assert \forall integer j; k <= j <= ls.count ==> idx_nbp < j;
+       //@ assert \forall integer j; k <= j <= ls.count ==> 0 <= idx_nbp < j <= ls.count;
+       //@ assert \forall integer j; k <= j <= ls.count ==> \separated(ls.cells[idx_nbp], ls.cells[j]);
+       //@ assert \forall integer j; k <= j <= ls.count ==> \separated(nbp, ls.cells[j]);
      }
    */
 
-  // nbp separation from ls.cells[back_again_k..]
-  //@ assert nbp == \null || \forall integer j; back_again_k <= j <= ls.count ==> \separated(nbp, ls.cells[j]);
+  // nbp separation from ls.cells[k..]
+  //@ assert nbp == \null || \forall integer j; k <= j <= ls.count ==> \separated(nbp, ls.cells[j]);
 
-  // bp separation from ls.cells[back_again_k..]
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> \separated(ls.cells[back_again_k - 1], ls.cells[i]);
-  //@ assert \forall integer i; back_again_k <= i <= ls.count ==> bp != ls.cells[i];
+  // bp separation from ls.cells[k..]
+  //@ assert \forall integer i; k <= i <= ls.count ==> \separated(ls.cells[k - 1], ls.cells[i]);
+  //@ assert \forall integer i; k <= i <= ls.count ==> bp != ls.cells[i];
 
   // two_separated(nbp, sp)
-  //@ assert sp == ls.cells[back_again_k];
-  //@ assert \forall integer i, j; 0 <= i <= back_again_k - 2 && back_again_k <= j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
+  //@ assert sp == ls.cells[k];
+  //@ assert \forall integer i, j; 0 <= i <= k - 2 && k <= j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   //@ assert two_separated(nbp, sp);
 
   bp->cdr = sp;
-  //@ assert bp == ls.cells[back_again_k - 1];
+  //@ assert bp == ls.cells[k - 1];
 
-  //@ assert \forall integer i; back_again_k <= i < ls.count ==> ls.cells[i]->cdr == ls.cells[i+1];
-  //@ assert listLR(ls, sp, back_again_k, ls.count, ls.cells[ls.count]);
+  //@ assert \forall integer i; k <= i < ls.count ==> ls.cells[i]->cdr == ls.cells[i+1];
+  //@ assert listLR(ls, sp, k, ls.count, ls.cells[ls.count]);
 
   // Verify listRL for nbp
-  //@ assert back_again_k > 1 ==> nbp == ls.cells[back_again_k - 2];
+  //@ assert k > 1 ==> nbp == ls.cells[k - 2];
   //@ assert ls.cells[0]->cdr == NULL;
-  //@ assert \forall integer i; 0 < i < back_again_k - 1 ==> ls.cells[i]->cdr == ls.cells[i - 1];
-  //@ assert listRL(ls, nbp, back_again_k - 1);
+  //@ assert \forall integer i; 0 < i < k - 1 ==> ls.cells[i]->cdr == ls.cells[i - 1];
+  //@ assert listRL(ls, nbp, k - 1);
 
   // Verify two_separated(nbp, bp)
   //@ assert valid_list(nbp);
   //@ assert valid_list(sp);
   //@ assert valid_list(bp);
   //@ assert two_separated(nbp, bp);
-  //@ ghost back_again_k = back_again_k - 1;
 
-  back_again(nbp, bp, np->cdr);
+  back_again(nbp, bp, np->cdr) /*@ ghost (k-1) */;
 }
 
 /*@lemma all_sep_means_index_eq_means_eq:
@@ -281,9 +281,10 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   0 <= i <= n && 0 <= j <= n ==> (tab[i] == tab[j] ==> i == j);
 */
 
-/*@ requires fp == NULL ==> qp == NULL;
-  @ requires bp != NULL && sp != NULL ==> sp != bp;
-  @ requires tortoise_hare_k >= 0;
+/*@ requires fp == \null ==> qp == \null;
+  @ requires \valid(fp) && \valid(fp->cdr) && fp->cdr != qp ==> valid_list(fp->cdr->cdr);
+  @ requires bp != \null && sp != \null ==> sp != bp;
+  @ requires k >= 0;
   @ requires \forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j]);
   @ requires valid_list(bp);
   @ requires valid_list(sp);
@@ -293,12 +294,12 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   @ requires ls.count < 10E5;
   @ requires ls.count >= 0;
   @ requires \valid(ls.cells[0..ls.count]);
-  @ requires listLR(ls, sp, tortoise_hare_k,
+  @ requires listLR(ls, sp, k,
   ls.count, qp);
-  @ requires listRL(ls, bp, tortoise_hare_k);
-  @ requires 2 * tortoise_hare_k <= ls.count;
-  @ requires ls.cells[2*tortoise_hare_k] == fp;
-  @ decreases ls.count - tortoise_hare_k;
+  @ requires listRL(ls, bp, k);
+  @ requires 2 * k <= ls.count;
+  @ requires ls.cells[2*k] == fp;
+  @ decreases ls.count - k;
   @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
   @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
   @ ensures listLR(ls, ls.cells[0], (int)0,
@@ -306,29 +307,31 @@ void back_again(lst_t bp, lst_t sp, lst_t np) {
   @ ensures reversal{Old, Post}(ls, (int)0);
   @ ensures frame_list{Old, Post}(ls);
   @ ensures ls.count >= 0;
-  @ ensures tortoise_hare_k >= 0;
  */
-
-void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
+void tortoise_hare(
+    lst_t bp,
+    lst_t sp,
+    lst_t fp,
+    lst_t qp
+)
+/*@ ghost (int k) */
+{
   lst_t nfp;
   if (fp == qp) {
-    //@ ghost back_again_k = tortoise_hare_k;
-    //@ assert fp == ls.cells[2 * back_again_k];
-    //@ assert qp == ls.cells[2 * back_again_k];
+    //@ assert fp == ls.cells[2 * k];
+    //@ assert qp == ls.cells[2 * k];
     //@ assert qp == ls.cells[ls.count];
-    //@ assert 2 * back_again_k == ls.count;
-    back_again(bp, sp, sp);
+    //@ assert 2 * k == ls.count;
+    back_again(bp, sp, sp) /*@ ghost(k) */;
   } else if (sp && fp && (nfp = fp->cdr) && nfp == qp) {
-    //@ ghost back_again_k = tortoise_hare_k;
-    //@ assert fp == ls.cells[2 * back_again_k];
+    //@ assert fp == ls.cells[2 * k];
     //@ assert fp->cdr == qp;
-    //@ assert fp->cdr == ls.cells[2 * back_again_k + 1];
-    //@ assert qp == ls.cells[2 * back_again_k + 1];
-    //@ assert 2 * back_again_k + 1 == ls.count;
-    back_again(bp, sp, sp->cdr);
+    //@ assert fp->cdr == ls.cells[2 * k + 1];
+    //@ assert qp == ls.cells[2 * k + 1];
+    //@ assert 2 * k + 1 == ls.count;
+    back_again(bp, sp, sp->cdr) /*@ ghost (k) */;
   } else {
     //@ assert valid_list(nfp);
-    //@ assert nfp->cdr != \null;
     //@ assert valid_list(nfp->cdr);
     nfp = fp->cdr->cdr;
     //@ assert valid_list(nfp);
@@ -336,11 +339,10 @@ void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp) {
     //@ assert valid_list(nsp);
     //@ assert valid_list(bp);
     sp->cdr = bp;
+    //@ assert \valid(sp);
     //@ assert valid_list(sp->cdr);
     //@ assert valid_list(sp);
-
-    //@ ghost tortoise_hare_k = tortoise_hare_k + 1;
-    tortoise_hare(sp, nsp, nfp, qp);
+    tortoise_hare(sp, nsp, nfp, qp) /*@ ghost (k + 1) */;
   }
 }
 
