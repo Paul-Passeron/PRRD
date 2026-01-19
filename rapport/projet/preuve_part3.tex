@@ -1,0 +1,80 @@
+
+\paragraph{Forme de la liste}
+
+La structure importante ici est la suivante, qui projette la liste récursive en une séquence déroulée:
+\begin{lstlisting}
+typedef struct list_shape_t {
+    lst_t *cells; // Tableau des ptrs de cellules
+    int count;    // Nombre de cellules
+} list_shape;
+\end{lstlisting}
+
+\subsubsection{Prédicats}
+
+La vérification repose sur plusieurs prédicats \textbf{ACSL} qui permettent de décrire les listes sans récursion.
+
+\bigskip
+
+\textbf{Validité de la forme de la liste} On vérifie que la list\_shape est bien formée, surtout du fait que toutes les cellules sont séparées (au sens de la mémoire) deux à deux.
+
+\begin{lstlisting}[language=ACSL]
+/*@ predicate valid_ls(list_shape ls) =
+    ls.count >= 0 &&
+    (\forall integer i; 0 <= i < ls.count ==> \valid(ls.cells[i]) && valid_list(ls.cells[i])) &&
+    (\forall integer i; 0 <= i <= ls.count ==> valid_list(ls.cells[i])) &&
+    (\forall integer i, j; 0 <= i < j <= ls.count ==> \separated(ls.cells[i], ls.cells[j])) &&
+    (\forall integer i; 0 <= i <= ls.count ==>
+        \forall integer j; 0 <= j < length(ls.cells[i]) ==>
+            (\exists integer n; ls.cells[n] == nth(ls.cells[i], j))
+    ) &&
+    \valid(&ls.cells[0..ls.count]);
+*/
+\end{lstlisting}
+
+\bigskip
+
+\textbf{Segment de liste en avant} On décrit un segment de liste de l'indice \lstinline{lo} à \lstinline{hi} dans \lstinline{ls} où tous les \lstinline{cdr} des cellules pointent vers la prochaine.
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=ACSL]
+/*@ predicate listLR (list_shape ls, lst_t p, integer lo, integer hi, lst_t q) =
+    0 <= lo <= hi <= ls.count &&
+    p == ls.cells[lo] &&
+    q == ls.cells[hi] &&
+    \forall integer i; lo <= i < hi ==> ls.cells[i]->cdr == ls.cells[i + 1];
+*/
+\end{lstlisting}
+\end{minipage}
+
+\bigskip
+
+\textbf{Segment de liste inversé} On décrit un segment inversé de la liste où chaque cellule pointe à l'envers (sauf la première, qui pointe vers \lstinline{NULL}).
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=ACSL]
+/*@ predicate listRL (list_shape ls, lst_t p, integer k) =
+    (k == 0 && p == NULL) ||
+    (0 < k <= ls.count && p == ls.cells[k - 1] &&
+    ls.cells[0]->cdr == \null &&
+    \valid(ls.cells[0]) &&
+    \forall integer i; 0 < i < k ==> ls.cells[i]->cdr == ls.cells[i - 1] && \valid(ls.cells[i]));
+*/
+\end{lstlisting}
+\end{minipage}
+
+\bigskip
+
+\textbf{2-séparation} Etant donné la nature permissive du C, on doit garder à l'esprit des contraintes plus importantes que dans le papier. Une de ces choses est de s'assurer que deux listes sont bien séparées l'une de l'autre, et ce pour chaque cellule. On a alors définit le prédicat suivant:
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=ACSL]
+/*@ predicate two_separated(lst_t l1, lst_t l2) =
+    (l1 == \null || l2 == \null) ||
+    \forall integer i, j; length(l1) > i >= 0 && length(l2) > j >= 0 ==>
+        \separated(nth(l1, i), nth(l2, j));
+*/
+\end{lstlisting}
+\end{minipage}
