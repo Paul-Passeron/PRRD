@@ -1,19 +1,9 @@
 #ifndef CONST_SPACE_H
 #define CONST_SPACE_H
 #include "common.h"
+#include "predicates.h"
 #include "lst.h"
 
-void back_again(lst_t bp, lst_t sp, lst_t np)
-/*@ ghost (list_shape ls, int k) */
-;
-void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp)
-/*@ ghost (list_shape ls, int k) */
-;
-void value_reverse(lst_t sp, lst_t qp)
-/*@ ghost (list_shape ls) */;
-
-#ifdef CONST_SPACE_IMPL
-#include "predicates.h"
 
 /*@ predicate valid_ls(list_shape ls) =
     ls.count >= 0 &&
@@ -81,30 +71,6 @@ void value_reverse(lst_t sp, lst_t qp)
     \at(q->cdr, L1) == \at(q->cdr, L2);
 */
 
-/*@ requires qp == NULL || \exists int i; 0 <= i < ls.count ==> ls.cells[i] == qp;
-  @ requires valid_ls(ls);
-  @ requires valid_list(sp);
-  @ requires valid_list(qp);
-  @ requires listLR(ls, sp, (int)0, (int)ls.count, qp);
-  @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
-  @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
-  @ ensures listLR(ls, sp, (int)0, (int)ls.count, qp);
-  @ ensures \forall int i; 0 <= i < ls.count ==> ls.cells[i]->car == \old(ls.cells[ls.count - 1 - i]->car) && ls.cells[i]->cdr == \old(ls.cells[i]->cdr);
-*/
-void value_reverse(lst_t sp, lst_t qp)
-    /*@ ghost (list_shape ls) */
-{
-    //@ assert qp == ls.cells[ls.count];
-    //@ assert listLR(ls, sp, (int)0, (int)ls.count, qp);
-    //@ assert sp == ls.cells[0];
-    //@ ghost lst_t old_qp = qp;
-    tortoise_hare(NULL, sp, sp, qp) /*@ ghost (ls, 0) */;
-    //@ assert listLR(ls, ls.cells[0], (int)0, (int)(ls.count), ls.cells[ls.count]);
-    //@ assert qp == old_qp;  // qp variable unchanged
-    //@ assert ls.cells[ls.count] == qp;
-    //@ assert listLR(ls, ls.cells[0], (int)0, ls.count, qp);
-}
-
 /*@ requires ((bp == \null || sp == \null) && k >= 0) || k > 0;
   @ requires bp != \null && sp != \null ==> sp != bp;
   @ requires valid_ls(ls);
@@ -122,6 +88,63 @@ void value_reverse(lst_t sp, lst_t qp)
   @ ensures reversal{Old, Post}(ls, (int)0);
   @ ensures ls.cells[ls.count] == \old(ls.cells[ls.count]);
 */
+void back_again(lst_t bp, lst_t sp, lst_t np)
+/*@ ghost (list_shape ls, int k) */
+;
+
+/*@ requires fp == \null ==> qp == \null;
+  @ requires bp != \null && sp != \null ==> sp != bp;
+  @ requires k >= 0;
+  @ requires valid_ls(ls);
+  @ requires in_ls(ls, bp);
+  @ requires in_ls(ls, sp);
+  @ requires in_ls(ls, fp);
+  @ requires in_ls(ls, qp);
+  @ requires qp == ls.cells[ls.count];
+  @ requires ls.cells[2 * k] == fp;
+  @ requires listLR(ls, sp, k, ls.count, qp);
+  @ requires listRL(ls, bp, k);
+  @ requires 2 * k <= ls.count;
+  @ decreases ls.count - k;
+  @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
+  @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
+  @ ensures listLR(ls, ls.cells[0], (int)0, ls.count, qp);
+  @ ensures reversal{Old, Post}(ls, (int)0);
+*/
+void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp)
+/*@ ghost (list_shape ls, int k) */
+;
+
+/*@ requires qp == NULL || \exists int i; 0 <= i < ls.count ==> ls.cells[i] == qp;
+  @ requires valid_ls(ls);
+  @ requires valid_list(sp);
+  @ requires valid_list(qp);
+  @ requires listLR(ls, sp, (int)0, (int)ls.count, qp);
+  @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
+  @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
+  @ ensures listLR(ls, sp, (int)0, (int)ls.count, qp);
+  @ ensures \forall int i; 0 <= i < ls.count ==> ls.cells[i]->car == \old(ls.cells[ls.count - 1 - i]->car) && ls.cells[i]->cdr == \old(ls.cells[i]->cdr);
+*/
+void value_reverse(lst_t sp, lst_t qp)
+/*@ ghost (list_shape ls) */;
+
+#ifdef CONST_SPACE_IMPL
+
+void value_reverse(lst_t sp, lst_t qp)
+    /*@ ghost (list_shape ls) */
+{
+    //@ assert qp == ls.cells[ls.count];
+    //@ assert listLR(ls, sp, (int)0, (int)ls.count, qp);
+    //@ assert sp == ls.cells[0];
+    //@ ghost lst_t old_qp = qp;
+    tortoise_hare(NULL, sp, sp, qp) /*@ ghost (ls, 0) */;
+    //@ assert listLR(ls, ls.cells[0], (int)0, (int)(ls.count), ls.cells[ls.count]);
+    //@ assert qp == old_qp;  // qp variable unchanged
+    //@ assert ls.cells[ls.count] == qp;
+    //@ assert listLR(ls, ls.cells[0], (int)0, ls.count, qp);
+}
+
+
 void back_again(lst_t bp, lst_t sp, lst_t np)
 /*@ ghost (list_shape ls, int k) */
 {
@@ -157,25 +180,6 @@ void back_again(lst_t bp, lst_t sp, lst_t np)
     back_again(nbp, bp, np->cdr) /*@ ghost (ls, k-1) */;
 }
 
-  /*@ requires fp == \null ==> qp == \null;
-    @ requires bp != \null && sp != \null ==> sp != bp;
-    @ requires k >= 0;
-    @ requires valid_ls(ls);
-    @ requires in_ls(ls, bp);
-    @ requires in_ls(ls, sp);
-    @ requires in_ls(ls, fp);
-    @ requires in_ls(ls, qp);
-    @ requires qp == ls.cells[ls.count];
-    @ requires ls.cells[2 * k] == fp;
-    @ requires listLR(ls, sp, k, ls.count, qp);
-    @ requires listRL(ls, bp, k);
-    @ requires 2 * k <= ls.count;
-    @ decreases ls.count - k;
-    @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
-    @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
-    @ ensures listLR(ls, ls.cells[0], (int)0, ls.count, qp);
-    @ ensures reversal{Old, Post}(ls, (int)0);
-*/
 void tortoise_hare(
     lst_t bp,
     lst_t sp,
