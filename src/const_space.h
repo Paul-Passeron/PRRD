@@ -15,7 +15,6 @@ void value_reverse(lst_t sp, lst_t qp)
 #ifdef CONST_SPACE_IMPL
 #include "predicates.h"
 
-
 /*@ predicate valid_ls(list_shape ls) =
     ls.count >= 0 &&
     (\forall integer i; 0 <= i < ls.count ==> \valid(ls.cells[i]) && valid_list(ls.cells[i])) &&
@@ -42,14 +41,6 @@ void value_reverse(lst_t sp, lst_t qp)
      ==> length{L}(p) >= hi - lo;
  */
 
- /*@ lemma cells_separated_instantiate{L}:
-     \forall list_shape ls, integer i, j;
-     \at(valid_ls(ls), L) &&
-     0 <= i < j <= \at(ls.count, L) &&
-     (\forall integer a, b; 0 <= a < b <= \at(ls.count, L) ==> \separated(\at(ls.cells[a], L), \at(ls.cells[b], L)))
-     ==> \separated(\at(ls.cells[i], L), \at(ls.cells[j], L));
- */
-
 /*@ lemma in_ls_not_end_means_valid_aux:
     \forall list_shape ls, lst_t l; valid_ls(ls) && valid_list(l) && in_ls(ls, l) && \exists integer i; 0 <= i < ls.count ==> \valid(l) && valid_list(l);
 */
@@ -59,7 +50,7 @@ void value_reverse(lst_t sp, lst_t qp)
 */
 
 /*@ lemma valid_ls_means_all_sep_from_cdr:
-    \forall list_shape ls; valid_ls(ls) ==> \forall integer i; 0 <= i < ls.count ==> \separated(ls.cells[i], ls.cells[i]->cdr);
+    \forall list_shape ls; valid_ls(ls) ==> \forall integer i; 0 <= i < ls.count ==> ls.cells[i]->cdr == \null || \separated(ls.cells[i], ls.cells[i]->cdr);
 */
 
 /*@ lemma all_sep_means_index_eq_means_eq:
@@ -193,7 +184,11 @@ void tortoise_hare(
     } else {
         nfp = fp->cdr;
         if (sp && fp && nfp == qp) {
+            //@ assert qp == ls.cells[ls.count];
             back_again(bp, sp, sp->cdr) /*@ ghost (ls, k) */;
+            //@ assert listLR(ls, ls.cells[0], (int)0, (int)(ls.count), ls.cells[ls.count]);
+            //@ assert ls.cells[ls.count] == qp;
+            //@ assert listLR(ls, ls.cells[0], (int)0, ls.count, qp);
         } else {
             nfp = fp->cdr->cdr;
             lst_t nsp = sp->cdr;
@@ -201,6 +196,7 @@ void tortoise_hare(
             tortoise_hare(sp, nsp, nfp, qp) /*@ ghost (ls, k + 1) */;
         }
     }
+    // missing ensures listLR(\old(ls), *(\old(ls.cells) + 0), 0, \old(ls.count), \old(qp));
 }
 
 #endif // CONST_SPACE_IMPL
