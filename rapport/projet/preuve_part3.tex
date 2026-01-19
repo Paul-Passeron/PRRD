@@ -9,6 +9,8 @@ typedef struct list_shape_t {
 } list_shape;
 \end{lstlisting}
 
+Cette structure est passée en paramètre \textit{ghost} aux fonctions, permettant de raisonner sur les indices plutôt que sur les pointeurs directement.
+
 \subsubsection{Prédicats}
 
 La vérification repose sur plusieurs prédicats \textbf{ACSL} qui permettent de décrire les listes sans récursion.
@@ -31,6 +33,14 @@ La vérification repose sur plusieurs prédicats \textbf{ACSL} qui permettent de
 */
 \end{lstlisting}
 
+Les conditions essentielles sont:
+\begin{itemize}
+\item Le compteur est positif.
+\item Toutes les cellules sont valides (lecture / écriture).
+\item Toutes les cellules sont séparées deux à deux.
+\item Le tableau \lstinline{cells} lui-même est valide.
+\end{itemize}
+
 \bigskip
 
 \textbf{Segment de liste en avant} On décrit un segment de liste de l'indice \lstinline{lo} à \lstinline{hi} dans \lstinline{ls} où tous les \lstinline{cdr} des cellules pointent vers la prochaine.
@@ -46,6 +56,8 @@ La vérification repose sur plusieurs prédicats \textbf{ACSL} qui permettent de
 */
 \end{lstlisting}
 \end{minipage}
+
+Ce prédicat exprime que le segment [\lstinline{lo}, \lstinline{hi}) forme une liste chaînée valide où chaque cellule pointe vers la suivante.
 
 \bigskip
 
@@ -64,17 +76,207 @@ La vérification repose sur plusieurs prédicats \textbf{ACSL} qui permettent de
 \end{lstlisting}
 \end{minipage}
 
+Ce prédicat est crucial pour décrire l'état intermédiaire pendant la phase tortoise-hare, où la première moitié de la liste a ses pointeurs inversés.
+
 \bigskip
 
-\textbf{2-séparation} Etant donné la nature permissive du C, on doit garder à l'esprit des contraintes plus importantes que dans le papier. Une de ces choses est de s'assurer que deux listes sont bien séparées l'une de l'autre, et ce pour chaque cellule. On a alors définit le prédicat suivant:
+\textbf{Prédicat de reversal} Ce prédicat exprime que les valeurs \lstinline{car} ont été échangées symétriquement.
 
 \bigskip
 \begin{minipage}{\linewidth}
 \begin{lstlisting}[language=ACSL]
-/*@ predicate two_separated(lst_t l1, lst_t l2) =
-    (l1 == \null || l2 == \null) ||
-    \forall integer i, j; length(l1) > i >= 0 && length(l2) > j >= 0 ==>
-        \separated(nth(l1, i), nth(l2, j));
+/*@ predicate reversal{L1, L2}(list_shape ls, integer k) =
+    (\forall integer i; 0 <= i < k ==>
+        \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2)) &&
+    (\forall integer i; \at(ls.count, L1) - k <= i < \at(ls.count, L1) ==>
+        \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2)) &&
+    (\forall integer i; k <= i < \at(ls.count, L1) - k ==>
+        \at(ls.cells[i]->car, L2) == \at(ls.cells[\at(ls.count, L1) - 1 - i]->car, L1));
 */
+\end{lstlisting}
+\end{minipage}
+
+Le paramètre $k$ indique la profondeur de la récursion. Les éléments aux indices $[0, k)$ et $[count-k, count)$ sont inchangés, tandis que ceux dans $[k, count-k)$ ont été échangés avec leur symétriques.
+
+
+\bigskip
+
+\textbf{Appartenance à la liste} Ce prédicat est utile pour vérifier qu'un pointeur appartient bien à la liste.
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=ACSL]
+/*@ predicate in_ls(list_shape ls, lst_t l) =
+    valid_ls(ls) &&
+    valid_list(l) &&
+    \exists integer i; 0 <= i <= ls.count ==>
+        l == ls.cells[i];
+*/
+\end{lstlisting}
+\end{minipage}
+
+\subsubsection{Contrats de fonctions}
+
+\textbf{Fonction \lstinline{value_reverse}}
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=C]
+/*@ requires qp == NULL || \exists int i; 0 <= i < ls.count ==> ls.cells[i] == qp;
+  @ requires valid_ls(ls);
+  @ requires valid_list(sp);
+  @ requires valid_list(qp);
+  @ requires listLR(ls, sp, (int)0, (int)ls.count, qp);
+  @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
+  @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
+  @ ensures listLR(ls, sp, (int)0, (int)ls.count, qp);
+  @ ensures \forall int i; 0 <= i < ls.count ==> ls.cells[i]->car == \old(ls.cells[ls.count - 1 - i]->car) && ls.cells[i]->cdr == \old(ls.cells[i]->cdr);
+*/
+void value_reverse(lst_t sp, lst_t qp)
+/*@ ghost (list_shape ls) */;
+\end{lstlisting}
+\end{minipage}
+
+On assure donc ici que:
+\begin{itemize}
+\item La structure de la liste est préservée (\lstinline{listLR} reste valide).
+\item Les valeurs \lstinline{car} sont inversées.
+\item Les pointeurs cdr sont bien à leur place initiale.
+\end{itemize}
+
+\bigskip
+
+\textbf{Fonction \lstinline{tortoise_hare}}
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=C]
+/*@ requires fp == \null ==> qp == \null;
+  @ requires bp != \null && sp != \null ==> sp != bp;
+  @ requires k >= 0;
+  @ requires valid_ls(ls);
+  @ requires in_ls(ls, bp);
+  @ requires in_ls(ls, sp);
+  @ requires in_ls(ls, fp);
+  @ requires in_ls(ls, qp);
+  @ requires qp == ls.cells[ls.count];
+  @ requires ls.cells[2 * k] == fp;
+  @ requires listLR(ls, sp, k, ls.count, qp);
+  @ requires listRL(ls, bp, k);
+  @ requires 2 * k <= ls.count;
+  @ decreases ls.count - k;
+  @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
+  @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
+  @ ensures listLR(ls, ls.cells[0], (int)0, ls.count, qp);
+  @ ensures reversal{Old, Post}(ls, (int)0);
+*/
+void tortoise_hare(lst_t bp, lst_t sp, lst_t fp, lst_t qp)
+/*@ ghost (list_shape ls, int k) */
+;
+\end{lstlisting}
+\end{minipage}
+
+Le lièvre (\lstinline{fp}) avance deux fois plus vite que la tortue (\lstinline{sp}). Cela permet de détecter le milieu de la liste. La relation \lstinline{ls.cells[2 * k] == fp} l'exprime bien.
+
+\bigskip
+
+\textbf{Fonction \lstinline{back_again}}
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=C]
+/*@ requires ((bp == \null || sp == \null) && k >= 0) || k > 0;
+  @ requires bp != \null && sp != \null ==> sp != bp;
+  @ requires valid_ls(ls);
+  @ requires in_ls(ls, sp);
+  @ requires in_ls(ls, bp);
+  @ requires in_ls(ls, np);
+  @ requires listLR(ls, sp, k, ls.count, ls.cells[ls.count]);
+  @ requires listRL(ls, bp, k);
+  @ requires k <= ls.count - k;
+  @ requires ls.cells[ls.count - k] == np;
+  @ decreases k;
+  @ assigns ls.cells[0..ls.count]->car \from(ls.cells[0..ls.count]->car);
+  @ assigns ls.cells[0..ls.count]->cdr \from(ls.cells[0..ls.count]);
+  @ ensures listLR(ls, ls.cells[0], (int)0, (int)(ls.count), ls.cells[ls.count]);
+  @ ensures reversal{Old, Post}(ls, (int)0);
+  @ ensures ls.cells[ls.count] == \old(ls.cells[ls.count]);
+*/
+void back_again(lst_t bp, lst_t sp, lst_t np)
+/*@ ghost (list_shape ls, int k) */
+;
+\end{lstlisting}
+\end{minipage}
+
+On assure échanger les valeurs et restaurer les pointeurs.
+
+
+\subsubsection{Lemmes auxilliaires}
+
+Plusieurs lemmes ont été nécessaires pour guider le prouveur:
+
+\bigskip
+
+\textbf{Lemmes sur la séparation}
+
+\bigskip
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=ACSL]
+/*@ lemma valid_ls_means_all_sep_from_cdr:
+    \forall list_shape ls; valid_ls(ls) ==> \forall integer i; 0 <= i < ls.count ==> ls.cells[i]->cdr == \null || \separated(ls.cells[i], ls.cells[i]->cdr);
+*/
+\end{lstlisting}
+\end{minipage}
+
+Qui assure que modifier le \lstinline{cdr} d'une cellule ne la modifiera pas elle même.
+
+D'autres lemmes tels que des lemmes de frame on été utilisés.
+
+
+Certains de ces lemmes n'ont malheureusement pas pu être prouvés:
+
+\begin{itemize}
+\item \lstinline{listLR_length}
+\item \lstinline{valid_ls_means_all_sep_from_cdr}
+\item \lstinline{in_ls_not_end_means_valid_aux}
+\end{itemize}
+
+Sinon, tous les buts sont prouvés.
+
+Voici la commande utilisée pour lancer frama-c:
+\bigskip
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=sh]
+frama-c -wp -wp-rte -wp-prover alt-ergo,z3,cvc5 const_space_impl.c -wp-auto wp:split -wp-timeout=30
+\end{lstlisting}
+\end{minipage}
+
+
+Et la sortie finale:
+
+\bigskip
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}[language=sh]
+[kernel] Parsing const_space_impl.c (with preprocessing)
+[wp] Running WP plugin...
+[rte:annot] annotating function back_again
+[rte:annot] annotating function tortoise_hare
+[rte:annot] annotating function value_reverse
+[wp] Computing [100 goals...]
+[wp] 170 goals scheduled
+[wp] [Timeout] typed_lemma_listLR_length (Alt-Ergo) (Cached)
+[wp] [Unknown] typed_lemma_valid_ls_means_all_sep_from_cdr (CVC5) (Cached)
+[wp] [Timeout] typed_lemma_in_ls_not_end_means_valid_aux (Tactic) (Alt-Ergo) (Cached)
+[wp] [Cache] found:162, updated:7
+[wp] Proved goals:  167 / 170
+  Qed:              52 (0.54ms-19ms-239ms)
+  Alt-Ergo 2.6.2:   95 (10ms-338ms-6.9s)
+  CVC5 1.1.2:        1 (593ms)
+  Z3 4.8.12:        16 (51ms-3.7s-21.7s)
+  Script:            3 (Tactics 6) (Qed 2/14 425ms) (Alt-Ergo 2/14 186ms) (CVC5 2/14 1.6s) (Z3 2/14 11.9s) (Cached)
+  Timeout:           2
+  Unknown:           1
 \end{lstlisting}
 \end{minipage}
