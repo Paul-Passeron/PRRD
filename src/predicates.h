@@ -50,17 +50,13 @@
  */
 
 
-
-
-/*@
-    predicate reversal{L1, L2}(list_shape ls, integer k) =
-        \forall integer i; 0 <= i < \at(ls.count, L1) ==> (
-            i < k || \at(ls.count, L1) - k <= i ==>
-            \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2) && (
-                k <= i < \at(ls.count, L1) - k ==> \at(ls.cells[i]->car, L1) ==
-   \at( ls.cells[ls.count - 1 - i]->car , L2)
-            )
-        );
+ /*@ predicate reversal{L1, L2}(list_shape ls, integer k) =
+     (\forall integer i; 0 <= i < k ==>
+         \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2)) &&
+     (\forall integer i; \at(ls.count, L1) - k <= i < \at(ls.count, L1) ==>
+         \at(ls.cells[i]->car, L1) == \at(ls.cells[i]->car, L2)) &&
+     (\forall integer i; k <= i < \at(ls.count, L1) - k ==>
+         \at(ls.cells[i]->car, L2) == \at(ls.cells[\at(ls.count, L1) - 1 - i]->car, L1));
  */
 
 /*@ predicate valid_or_null(lst_t p) = p == NULL || \valid(p); */
