@@ -1,1 +1,80 @@
+Pour commencer, nous implémentons les arbres binaires à l’aide d’une structure chaînée.
 
+Chaque nœud est défini par une donnée (de type int dans notre cas), un pointeur vers son sous-arbre gauche et un pointeur vers son sous-arbre droit.
+
+\begin{lstlisting}[language=C]
+struct tree {
+  struct tree *left;
+  struct tree *right;
+  elt_t dat;
+};
+\end{lstlisting}
+
+L'étape suivante est d'implémenter l'algorithme de Morris.
+
+L'algorithme de Morris sert à traverser les arbres binaires dans l'ordre sans utiliser de pile.
+
+\bigskip
+
+Voici la logique de cet algorithme, ci dessous :
+
+\bigskip
+
+On commence à la racine de l'arbre, puis on répète jusqu'au dernier nœud.
+
+Pour chaque nœud courant :
+
+\bigskip
+
+S’il n’a pas de fils gauche :
+
+\begin{itemize}
+  \item $\rightarrow$ on le visite
+  \item $\rightarrow$ on va à son fils droit
+\end{itemize}
+
+S’il a un fils gauche :
+
+\begin{itemize}
+  \item $\rightarrow$ on cherche son prédécesseur : le nœud le plus à droite du sous-arbre gauche
+\end{itemize}
+
+Si ce prédécesseur ne pointe pas encore vers le nœud courant :
+
+\begin{itemize}
+  \item $\rightarrow$ on crée un lien temporaire vers le nœud courant
+  \item $\rightarrow$ on va à gauche
+\end{itemize}
+
+Si ce prédécesseur pointe déjà vers le nœud courant :
+
+\begin{itemize}
+  \item $\rightarrow$ on supprime le lien
+  \item $\rightarrow$ on visite le nœud courant
+  \item $\rightarrow$ on va à droite
+\end{itemize}
+
+\bigskip
+
+Pour implémenter cet algorithme, on crée quatre fonctions.
+
+\bigskip
+
+La fonction \texttt{void visit(tree\_t t);}  
+sert à visiter chaque nœud, en affichant sa valeur.
+
+\bigskip
+
+La fonction \texttt{void traversal(tree\_t t);}  
+sert de point d’entrée et lance le parcours de Morris à partir de la racine de l’arbre.
+
+\bigskip
+
+La fonction \texttt{bool warp(tree\_t t, tree\_t q);}  
+sert à créer le lien entre le nœud le plus à droite du sous-arbre gauche et le nœud courant s'il n'existe pas encore (et retourne \texttt{true}), sinon elle l'enlève et retourne \texttt{false}.
+
+\bigskip
+
+La fonction \texttt{void morris\_visit(tree\_t t);}  
+est la fonction principale de l'algorithme.  
+Elle applique directement la logique de Morris décrite au-dessus en appelant les fonctions \texttt{warp} et \texttt{visit}.
