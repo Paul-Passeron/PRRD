@@ -1,49 +1,86 @@
-Tout d'abord, il faut implémenter le type de liste chaînées défini par JCF tel que : 
-CODE CAML
+L'algorithme que l'on va implémenter sur ces listes permet d'inverser ces listes chaînées, sans modifier les pointeurs \lstinline{cdr}. Au contraire, on inverse ici les valeurs des champs \lstinline{car}. Cela se passe en deux étapes:
+\begin{enumerate}
+\item \textbf{Phase du lièvre et de la tortue (Tortoise-Hare)}: On parcourt la liste en utilisant un pointeur lent et un pointeur rapide afin de trouver le milieu de la liste, tout en inversant les pointeurs \lstinline{cdr} de la première partie.
+\item \textbf{Phase Back-Again}: On traverse simultanément les deux moitiées, en échangeant les valeurs (\lstinline{car}), tout en restorant la structure originelle de la liste au niveau des pointeurs (\lstinline{cdr}).
+\end{enumerate}
 
-On obtient ainsi le fichier \texttt{common.h} : 
+Tout d'abord, il faut implémenter le type de liste chaînées défini par JCF tel que :
+\begin{lstlisting}[language=Caml]
+type lst =
+    | Nil
+    | Cons of {mutable car: elt; mutable cdr: lst}
+\end{lstlisting}
+
+On obtient ainsi le fichier \texttt{common.h}, en notant que les champs de structures sont mutables par défaut en C:
 \begin{lstlisting}
-#include <stddef.h>
-
 typedef int elt_t;
 
 struct lst {
-  elt_t car;
-  struct lst *cdr;
+    elt_t car;
+    struct lst *cdr;
 };
 
 typedef struct lst *lst_t;
 \end{lstlisting}
 
-Dans le fichier \texttt{lst.h} dans lequel on inclut les bibliothèques suivantes : 
-
+\newpage
+\subsubsection{La fonction Back-Again}
 \begin{lstlisting}
-#include "common.h"
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdio.h>
-\end{lstlisting}
-
-On va, traduire la fonction blable:
-CODE CAML 
-
-Ce qui donne: 
-\begin{lstlisting}
-lst_t aux(lst_t r, lst_t l) {
-	if (!l) {
-		return r;
-  	}
-  	else {
-		lst_t n = l->cdr;
-		l->cdr = r;
-		return aux(l, n);
-  	}
+void back_again(lst_t bp, lst_t sp, lst_t np)
+/*@ ghost (list_shape ls, int k) */
+{
+    if (bp == NULL || np == NULL)
+        return;
+    elt_t tmp = bp->car;
+    bp->car = np->car;
+    np->car = tmp;
+    lst_t nbp = bp->cdr;
+    ls.cells[i]->cdr == ls.cells[i + 1]; */
+    back_again(nbp, bp, np->cdr) /*@ ghost (ls, k-1) */;
 }
 \end{lstlisting}
 
+Les paramètres fantômes \lstinline{ls} et \lstinline{k} servent à savoir où l'on est dans la forme de la liste. La fonction échange les valeurs à la position $k-1$ et à la position $\text{\lstinline{ls.count}} - k$ et ensuite restore le pointeur à la position $k-1$.
+
+\newpage
+\subsubsection{La fonction Tortoise-Hare}
 \begin{lstlisting}
-lst_t list_reversal(lst_t l) {
-	return aux(NULL, l);
+void tortoise_hare(
+    lst_t bp,
+    lst_t sp,
+    lst_t fp,
+    lst_t qp
+)
+/*@ ghost (list_shape ls, int k) */
+{
+    lst_t nfp;
+    if (fp == qp) {
+        // La taille de la liste est paire, on est arrivé à la fin
+        back_again(bp, sp, sp) /*@ ghost(ls, k) */;
+    } else {
+        nfp = fp->cdr;
+        if (sp && fp && nfp == qp) {
+            // La taille est impaire, On est à une cellule de la fin
+            back_again(bp, sp, sp->cdr) /*@ ghost (ls, k) */;
+        } else {
+            nfp = fp->cdr->cdr;
+            lst_t nsp = sp->cdr;
+            sp->cdr = bp; // On inverse le pointeur
+            tortoise_hare(sp, nsp, nfp, qp) /*@ ghost (ls, k + 1) */;
+        }
+    }
 }
 \end{lstlisting}
+On implémente la première phase avec l'aglorithme du lièvre et de la tortue.
 
+\newpage
+\subsubsection{La fonction finale}
+Pour inverser un segment de liste entre les pointeurs \lstinline{bp} et \lstinline{fp}, on crée une dernière fonction:
+
+\begin{lstlisting}
+void value_reverse(lst_t sp, lst_t qp)
+ /*@ ghost (list_shape ls) */
+{
+  tortoise_hare(NULL, sp, sp, qp) /*@ ghost (ls, 0) */;
+}
+\end{lstlisting}
