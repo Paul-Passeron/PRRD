@@ -40,7 +40,7 @@ void back_again(lst_t bp, lst_t sp, lst_t np)
 }
 \end{lstlisting}
 
-Les paramètres fantômes \lstinline{ls} et \lstinline{k} servent à savoir où l'on est dans la forme de la liste. La fonction échange les valeurs à la position $k-1$ et à la position $\text{\lstinline{ls.count}} - k$ et ensuite restore le pointeur à la position $k-1$.
+Les paramètres fantômes \lstinline{ls} et \lstinline{k} servent à savoir où l'on est dans la forme de la liste. La fonction échange les valeurs a la position $k-1$ et a la position \lstinline{ls.count} - $k$ et ensuite restore le pointeur à la position $k-1$.
 
 \newpage
 \subsubsection{La fonction Tortoise-Hare}
@@ -55,12 +55,12 @@ void tortoise_hare(
 {
     lst_t nfp;
     if (fp == qp) {
-        // La taille de la liste est paire, on est arrivé à la fin
+        // La taille de la liste est paire, on est arrive a la fin
         back_again(bp, sp, sp) /*@ ghost(ls, k) */;
     } else {
         nfp = fp->cdr;
         if (sp && fp && nfp == qp) {
-            // La taille est impaire, On est à une cellule de la fin
+            // La taille est impaire, on est a une cellule de la fin
             back_again(bp, sp, sp->cdr) /*@ ghost (ls, k) */;
         } else {
             nfp = fp->cdr->cdr;
