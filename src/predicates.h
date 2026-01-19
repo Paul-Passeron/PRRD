@@ -101,17 +101,10 @@
   l == \null ? 0 : 1 + length(l->cdr);
 */
 
-/*@ predicate two_separated(lst_t l1, lst_t l2) =
-  (l1 == \null || l2 == \null) ||
-  \forall integer i, j; length(l1) > i >= 0 && length(l2) > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
-*/
-
-
-
 // /*@ predicate two_separated(lst_t l1, lst_t l2) =
 //   (l1 == \null || l2 == \null) ||
-//   \exists integer n1, n2; n1 >= 0 && n2 >= 0 && nth(l1, n1) == \null &&
-//   \forall integer i, j; n1 > i >= 0 && n2 > j >= 0 ==> \separated(nth(l1, i), nth(l2, j));
+//   \forall integer i, j; 0 <= i < length(l1) &&  0 <= j < length(l2) ==>
+//     \separated(nth(l1, i), nth(l2, j));
 // */
 
 /*@ lemma length_of_nonnull_valid:
