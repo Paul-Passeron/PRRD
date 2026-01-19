@@ -210,5 +210,3 @@ void tortoise_hare(
 
 #endif // CONST_SPACE_IMPL
 #endif // CONST_SPACE_H
-
-#include <stdlib.h>
